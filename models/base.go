@@ -3,13 +3,32 @@ package models
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/joho/godotenv"
+	uuid "github.com/satori/go.uuid"
 )
 
 var db *gorm.DB
+
+// Base -> Struct to substitute gorm.Model when I want a UUID
+type Base struct {
+	ID        string     `gorm:"primary_key" sql:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"update_at"`
+	DeletedAt *time.Time `sql:"index" json:"deleted_at"`
+}
+
+// BeforeCreate will set a UUID rather than numeric ID.
+func (base *Base) BeforeCreate(scope *gorm.Scope) error {
+	uuid, err := uuid.NewV4()
+	if err != nil {
+		return err
+	}
+	return scope.SetColumn("ID", uuid)
+}
 
 func init() {
 

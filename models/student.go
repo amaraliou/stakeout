@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/dgrijalva/jwt-go"
-	"github.com/jinzhu/gorm"
 )
 
 // Token -> Struct to hold auth token information
@@ -29,8 +28,10 @@ type BasicStudent struct {
 
 // Student -> struct to hold all the User information
 type Student struct {
-	gorm.Model
+	Base
 	BasicStudent
-	Degree         string `json:"degree"`
-	GraduationYear int    `json:"grad_year"`
+	Degree         string     `json:"degree"`
+	GraduationYear int        `json:"grad_year"`
+	Addresses      []*Address `json:"addresses"`
+	Orders         []*Order   `json:"orders"`
 }
