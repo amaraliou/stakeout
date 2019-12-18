@@ -17,13 +17,20 @@ type User struct {
 	Password string `json:"password"`
 }
 
-// Student -> Struct to hold User information
+// BasicStudent -> Struct to hold basic User information
+type BasicStudent struct {
+	User                // Student Email to be verified (possibly use SheerID)
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	BirthDate    string `json:"birth_date" sql:"timestamp with time zone"`
+	University   string `json:"university"`
+	MobileNumber int    `json:"mobile_number"`
+}
+
+// Student -> struct to hold all the User information
 type Student struct {
 	gorm.Model
-	User                  // Student Email to be verified (possibly use SheerID)
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
-	BirthDate      string `json:"birth_date" sql:"timestamp with time zone"`
-	University     string `json:"university"`
+	BasicStudent
+	Degree         string `json:"degree"`
 	GraduationYear int    `json:"grad_year"`
 }
