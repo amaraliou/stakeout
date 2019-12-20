@@ -16,8 +16,8 @@ var db *gorm.DB
 // Base -> Struct to substitute gorm.Model when I want a UUID
 type Base struct {
 	ID        string     `gorm:"primary_key" sql:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"update_at"`
+	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"update_at"`
 	DeletedAt *time.Time `sql:"index" json:"deleted_at"`
 }
 

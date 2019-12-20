@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Token -> Struct to hold auth token information
@@ -32,6 +33,26 @@ type Student struct {
 	BasicStudent
 	Degree         string     `json:"degree"`
 	GraduationYear int        `json:"grad_year"`
-	Addresses      []*Address `json:"addresses"`
-	Orders         []*Order   `json:"orders"`
+	Address        *Address   `json:"address"`
+	OtherAddresses []*Address `json:"other_addresses"`
+}
+
+// Hash -> Generate hash for given password
+func Hash(password string) ([]byte, error) {
+	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+}
+
+// VerifyPassword -> Verify a password given it's hash
+func VerifyPassword(hashedPassword, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+// BeforeSave will check hashes for passwords
+func (student *Student) BeforeSave() error {
+	hashedPassword, err := Hash(student.Password)
+	if err != nil {
+		return err
+	}
+	student.Password = string(hashedPassword)
+	return nil
 }
