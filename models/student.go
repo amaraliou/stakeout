@@ -36,7 +36,7 @@ type Student struct {
 	CountryCode    string     `json:"country"`
 	GraduationYear int        `json:"grad_year"`
 	Addresses      []*Address `json:"addresses"`
-	OrderIDs       []string   `json:"orders"`
+	Orders         []*Order   `gorm:"ForeignKey:OrderedBy" json:"orders"`
 	Points         int        `json:"points"`
 }
 
@@ -122,7 +122,7 @@ func (student *Student) Validate(action string) error {
 func (student *Student) CreateStudent(db *gorm.DB) (*Student, error) {
 
 	student.Points = 0
-	student.OrderIDs = []string{}
+	student.Orders = []*Order{}
 	student.Addresses = []*Address{}
 
 	err := db.Debug().Create(&student).Error
