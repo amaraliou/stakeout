@@ -18,4 +18,5 @@ type Address struct {
 	City         string `json:"city"`
 	County       string `json:"county"`
 	Postcode     string `json:"postcode"` // To implement postcode validation
+	Primary      bool   `json:"is_primary_address"`
 }

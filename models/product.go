@@ -6,4 +6,5 @@ type Product struct {
 	Name       string  `json:"name"`
 	BasicPrice float32 `json:"price"`
 	SoldBy     *Shop   `json:"sold_by"`
+	Reward     int     `json:"reward"`
 }
