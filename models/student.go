@@ -20,24 +20,23 @@ type Token struct {
 
 // User -> Struct to hold basic user information
 type User struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	IsVerified bool   `json:"verified"`
 }
 
 // Student -> struct to hold all the User information
 type Student struct {
 	Base
-	User                      // Student Email to be verified (possibly use SheerID)
-	FirstName      string     `json:"first_name"`
-	LastName       string     `json:"last_name"`
-	BirthDate      string     `json:"birth_date" sql:"timestamp with time zone"`
-	University     string     `json:"university"`
-	MobileNumber   string     `json:"mobile_number"`
-	CountryCode    string     `json:"country"`
-	GraduationYear int        `json:"grad_year"`
-	Addresses      []*Address `json:"addresses"`
-	Orders         []*Order   `gorm:"ForeignKey:OrderedBy" json:"orders"`
-	Points         int        `json:"points"`
+	User                  // Student Email to be verified (possibly use SheerID)
+	FirstName      string `json:"first_name"`
+	LastName       string `json:"last_name"`
+	BirthDate      string `json:"birth_date" sql:"timestamp with time zone"`
+	University     string `json:"university"`
+	MobileNumber   string `json:"mobile_number"`
+	CountryCode    string `json:"country"`
+	GraduationYear int    `json:"grad_year"`
+	Points         int    `json:"points"`
 }
 
 // Hash -> Generate hash for given password
@@ -122,8 +121,6 @@ func (student *Student) Validate(action string) error {
 func (student *Student) CreateStudent(db *gorm.DB) (*Student, error) {
 
 	student.Points = 0
-	student.Orders = []*Order{}
-	student.Addresses = []*Address{}
 
 	err := db.Debug().Create(&student).Error
 	if err != nil {

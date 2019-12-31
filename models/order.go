@@ -1,5 +1,7 @@
 package models
 
+import uuid "github.com/satori/go.uuid"
+
 const (
 	OrderPending   uint8 = 0
 	OrderPayed     uint8 = 1
@@ -23,7 +25,9 @@ var statusScope = []uint8{
 // Order -> Struct to hold information about a specific order from a customer
 type Order struct {
 	Base
+	UserID      uuid.UUID  `json:"user_id"`
 	OrderedBy   *Student   `json:"ordered_by"`
+	ShopID      uuid.UUID  `json:"shop_id"`
 	OrderedFrom *Shop      `json:"ordered_from"`
 	OrderItems  []*Product `json:"ordered_items"`
 	OrderTotal  float32    `json:"total_price"`
