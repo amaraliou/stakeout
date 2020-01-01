@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
+	"github.com/amaraliou/apetitoso/auth"
 	"github.com/amaraliou/apetitoso/models"
 	"github.com/amaraliou/apetitoso/responses"
 )
@@ -73,6 +75,44 @@ func (server *Server) GetStudentByID(writer http.ResponseWriter, request *http.R
 // UpdateStudent -> handles PUT /api/v1/student/<id:uuid>
 func (server *Server) UpdateStudent(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	studentID := vars["id"]
+	student := models.Student{}
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+	}
+
+	err = json.Unmarshal(body, &student)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	tokenID, err := auth.ExtractTokenID(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	if tokenID != studentID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
+	}
+
+	err = student.Validate("update")
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	updatedStudent, err := student.UpdateStudent(server.DB, studentID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, updatedStudent)
 }
 
 // DeleteStudent -> handles DELETE /api/v1/student/<id:uuid>
