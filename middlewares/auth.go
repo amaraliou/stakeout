@@ -3,8 +3,12 @@ package middlewares
 import (
 	"errors"
 	"net/http"
+
+	"github.com/amaraliou/apetitoso/auth"
+	"github.com/amaraliou/apetitoso/responses"
 )
 
+// SetMiddlewareAuthentication ...
 func SetMiddlewareAuthentication(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := auth.TokenValid(r)
