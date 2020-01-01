@@ -6,4 +6,5 @@ type Shop struct {
 	Name      string   `json:"name"`
 	AddressID uint     `json:"address_id"`
 	Address   *Address `json:"address"`
+	Admins    []*Admin `json:"admins"`
 }
