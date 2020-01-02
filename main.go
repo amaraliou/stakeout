@@ -1,5 +1,7 @@
 package main
 
-func main() {
+import "github.com/amaraliou/apetitoso/server"
 
+func main() {
+	server.Run()
 }
