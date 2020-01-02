@@ -117,5 +117,5 @@ func (server *Server) UpdateStudent(writer http.ResponseWriter, request *http.Re
 
 // DeleteStudent -> handles DELETE /api/v1/student/<id:uuid>
 func (server *Server) DeleteStudent(writer http.ResponseWriter, request *http.Request) {
-
+	responses.JSON(writer, http.StatusOK, "Endpoint to implement")
 }
