@@ -175,5 +175,11 @@ func (student *Student) UpdateStudent(db *gorm.DB, id string) (*Student, error) 
 
 // DeleteStudent -> Function to delete a student
 func (student *Student) DeleteStudent(db *gorm.DB, id string) (int64, error) {
-	return 0, nil // To implement (there is some cascading stuff to consider)
+
+	db = db.Debug().Model(&Student{}).Where("id = ?", id).Take(&Student{}).Delete(&Student{})
+	if db.Error != nil {
+		return 0, db.Error
+	}
+
+	return db.RowsAffected, nil
 }
