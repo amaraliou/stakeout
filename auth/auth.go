@@ -14,8 +14,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-// to do: Create a model for Token
-
 // CreateToken ...
 func CreateToken(userID uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{}
