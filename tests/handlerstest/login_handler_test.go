@@ -2,6 +2,7 @@ package handlerstest
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -77,6 +78,21 @@ func TestLogIn(t *testing.T) {
 			statusCode:   200,
 			errorMessage: "",
 		},
+		{
+			inputJSON:    `{"email": "email@email.com", "password": "Wrong password"}`,
+			statusCode:   422,
+			errorMessage: "crypto/bcrypt: hashedPassword is not the hash of the given password",
+		},
+		{
+			inputJSON:    `{"email": "fail@email.com", "password": "password"}`,
+			statusCode:   422,
+			errorMessage: "record not found",
+		},
+		{
+			inputJSON:    `{"email": "failmail.com", "password": "password"}`,
+			statusCode:   422,
+			errorMessage: "Invalid Email",
+		},
 		// More cases to cover
 	}
 
@@ -94,6 +110,15 @@ func TestLogIn(t *testing.T) {
 		assert.Equal(t, rr.Code, v.statusCode)
 		if v.statusCode == 200 {
 			assert.NotEqual(t, rr.Body.String(), "")
+		}
+
+		if v.statusCode == 422 && v.errorMessage != "" {
+			responseMap := make(map[string]interface{})
+			err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+			if err != nil {
+				t.Errorf("Cannot convert to json: %v", err)
+			}
+			assert.Equal(t, responseMap["error"], v.errorMessage)
 		}
 	}
 }
