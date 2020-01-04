@@ -117,5 +117,28 @@ func (server *Server) UpdateStudent(writer http.ResponseWriter, request *http.Re
 
 // DeleteStudent -> handles DELETE /api/v1/student/<id:uuid>
 func (server *Server) DeleteStudent(writer http.ResponseWriter, request *http.Request) {
-	responses.JSON(writer, http.StatusOK, "Endpoint to implement")
+
+	vars := mux.Vars(request)
+	studentID := vars["id"]
+	student := models.Student{}
+
+	tokenID, err := auth.ExtractTokenID(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	if tokenID != "" && tokenID != studentID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
+	}
+
+	_, err = student.DeleteStudent(server.DB, studentID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	writer.Header().Set("Entity", fmt.Sprintf("%s", studentID))
+	responses.JSON(writer, http.StatusNoContent, "")
 }
