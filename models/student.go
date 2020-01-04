@@ -62,23 +62,22 @@ func (student *Student) BeforeSave() error {
 
 // Validate will validate the entries of the given student
 func (student *Student) Validate(action string) error {
-	if student.Email == "" {
-		return errors.New("Required Email")
-	}
-
-	if student.Password == "" {
-		return errors.New("Required Password")
-	}
-
-	if err := checkmail.ValidateFormat(student.Email); err != nil {
-		return errors.New("Invalid Email")
-	}
-
 	switch strings.ToLower(action) {
 	case "update":
 		return nil
 
 	case "create":
+		if student.Email == "" {
+			return errors.New("Required Email")
+		}
+
+		if student.Password == "" {
+			return errors.New("Required Password")
+		}
+
+		if err := checkmail.ValidateFormat(student.Email); err != nil {
+			return errors.New("Invalid Email")
+		}
 		if student.CountryCode == "" {
 			return errors.New("Required Country Code")
 		}
@@ -94,6 +93,18 @@ func (student *Student) Validate(action string) error {
 		return nil
 
 	default:
+		if student.Email == "" {
+			return errors.New("Required Email")
+		}
+
+		if student.Password == "" {
+			return errors.New("Required Password")
+		}
+
+		if err := checkmail.ValidateFormat(student.Email); err != nil {
+			return errors.New("Invalid Email")
+		}
+
 		return nil
 	}
 }
