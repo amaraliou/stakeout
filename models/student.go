@@ -20,7 +20,7 @@ type Token struct {
 
 // User -> Struct to hold basic user information
 type User struct {
-	Email      string `json:"email"`
+	Email      string `json:"email" gorm:"unique;not null"`
 	Password   string `json:"password"`
 	IsVerified bool   `json:"verified"`
 }
@@ -29,6 +29,7 @@ type User struct {
 type Student struct {
 	Base
 	User                  // Student Email to be verified (possibly use SheerID)
+	IsStudent      bool   `json:"is_student"`
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
 	BirthDate      string `json:"birth_date" sql:"timestamp with time zone"`
@@ -78,18 +79,6 @@ func (student *Student) Validate(action string) error {
 		return nil
 
 	case "create":
-		if student.FirstName == "" {
-			return errors.New("Required First Name")
-		}
-
-		if student.LastName == "" {
-			return errors.New("Required Last Name")
-		}
-
-		if student.BirthDate == "" {
-			return errors.New("Required Birth Date, otherwise you can't order that cocktail")
-		}
-
 		if student.CountryCode == "" {
 			return errors.New("Required Country Code")
 		}
@@ -100,14 +89,6 @@ func (student *Student) Validate(action string) error {
 
 		if _, err := phonenumbers.Parse(student.MobileNumber, student.CountryCode); err != nil {
 			return errors.New("Phone number ain't valid")
-		}
-
-		if student.University == "" {
-			return errors.New("Required University")
-		}
-
-		if student.GraduationYear == 0 {
-			return errors.New("Required Graduation Year")
 		}
 
 		return nil

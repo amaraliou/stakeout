@@ -14,6 +14,7 @@ var students = []models.Student{
 			Password:   "password",
 			IsVerified: true,
 		},
+		IsStudent:      true,
 		FirstName:      "Aliou",
 		LastName:       "Amar",
 		BirthDate:      "10/09/1997",
