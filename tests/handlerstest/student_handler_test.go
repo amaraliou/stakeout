@@ -185,3 +185,82 @@ func TestGetStudentByID(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdateStudent(t *testing.T) {
+
+	var AuthEmail, AuthPassword, AuthID string
+
+	err := refreshStudentTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	students, err := seedStudents()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	authStudent := students[0]
+	AuthID = authStudent.ID.String()
+	AuthEmail = authStudent.Email
+	AuthPassword = "password"
+
+	token, err := server.SignIn(AuthEmail, AuthPassword)
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	tokenString := fmt.Sprintf("Bearer %v", token)
+
+	samples := []struct {
+		id           string
+		updateJSON   string
+		updateEmail  string
+		updateNumber string
+		statusCode   int
+		tokenGiven   string
+		errorMessage string
+	}{
+		{
+			id:           AuthID,
+			updateJSON:   `{"country": "GB", "mobile_number":"07564356660"}`,
+			updateNumber: "07564356660",
+			statusCode:   200,
+			tokenGiven:   tokenString,
+			errorMessage: "",
+		},
+		{
+			id:           AuthID,
+			updateJSON:   `{"country": "GBDR", "mobile_number":"07564356660"}`,
+			statusCode:   422,
+			tokenGiven:   tokenString,
+			errorMessage: "Phone number ain't valid",
+		},
+	}
+
+	for _, v := range samples {
+		req, err := http.NewRequest("PUT", "/users", bytes.NewBufferString(v.updateJSON))
+		if err != nil {
+			t.Errorf("This is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"id": v.id})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.UpdateStudent)
+		req.Header.Set("Authorization", v.tokenGiven)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			t.Errorf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+		if v.statusCode == 200 {
+			assert.Equal(t, responseMap["mobile_number"], v.updateNumber)
+		}
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
+}
