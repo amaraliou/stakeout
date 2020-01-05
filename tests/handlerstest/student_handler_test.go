@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/amaraliou/apetitoso/models"
+	"github.com/gorilla/mux"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -94,6 +96,92 @@ func TestCreateStudent(t *testing.T) {
 		}
 		if v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
 			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
+}
+
+func TestGetStudents(t *testing.T) {
+
+	err := refreshStudentTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = seedStudents()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req, err := http.NewRequest("GET", "/students", nil)
+	if err != nil {
+		t.Errorf("this is the error: %v\n", err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.GetStudents)
+	handler.ServeHTTP(rr, req)
+
+	var students []models.Student
+	err = json.Unmarshal([]byte(rr.Body.String()), &students)
+	if err != nil {
+		log.Fatalf("Cannot convert to json: %v\n", err)
+	}
+	assert.Equal(t, rr.Code, http.StatusOK)
+	assert.Equal(t, len(students), 2)
+}
+
+func TestGetStudentByID(t *testing.T) {
+
+	err := refreshStudentTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	student, err := seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	studentSample := []struct {
+		id         string
+		statusCode int
+		email      string
+		firstName  string
+		lastName   string
+	}{
+		{
+			id:         student.ID.String(),
+			statusCode: 200,
+			email:      student.Email,
+			firstName:  student.FirstName,
+			lastName:   student.LastName,
+		},
+	}
+
+	for _, v := range studentSample {
+
+		req, err := http.NewRequest("GET", "/students", nil)
+		if err != nil {
+			t.Errorf("this is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"id": v.id})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.GetStudentByID)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			log.Fatalf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+
+		if v.statusCode == 200 {
+			assert.Equal(t, student.Email, responseMap["email"])
+			assert.Equal(t, student.FirstName, responseMap["first_name"])
+			assert.Equal(t, student.LastName, responseMap["last_name"])
 		}
 	}
 }
