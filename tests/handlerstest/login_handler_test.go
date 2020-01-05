@@ -93,6 +93,16 @@ func TestLogIn(t *testing.T) {
 			statusCode:   422,
 			errorMessage: "Invalid Email",
 		},
+		{
+			inputJSON:    `{"email": "", "password": "password"}`,
+			statusCode:   422,
+			errorMessage: "Required Email",
+		},
+		{
+			inputJSON:    `{"email": "email@email.com", "password": ""}`,
+			statusCode:   422,
+			errorMessage: "Required Password",
+		},
 		// More cases to cover
 	}
 

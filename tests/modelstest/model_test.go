@@ -47,7 +47,6 @@ func refreshStudentTable() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Successfully refreshed table")
 	return nil
 }
 
