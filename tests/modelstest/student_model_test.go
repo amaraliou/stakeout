@@ -1,10 +1,12 @@
 package modelstest
 
 import (
+	"errors"
 	"log"
 	"testing"
 
 	"github.com/amaraliou/apetitoso/models"
+	"github.com/lib/pq"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -27,6 +29,16 @@ func TestFindAllStudents(t *testing.T) {
 	}
 
 	assert.Equal(t, len(*students), 2)
+}
+
+func TestFindAllStudentsNonExistingTable(t *testing.T) {
+	err := server.DB.DropTableIfExists(&models.Student{}).Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = studentInstance.FindAllStudents(server.DB)
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"students\" does not exist")
 }
 
 func TestSaveStudent(t *testing.T) {
@@ -142,4 +154,19 @@ func TestDeleteStudent(t *testing.T) {
 	}
 
 	assert.Equal(t, isDeleted, int64(1))
+}
+
+func TestDeleteWrongStudent(t *testing.T) {
+	err := refreshStudentTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = studentInstance.DeleteStudent(server.DB, "8258e9fd-7769-4eb5-8b82-5f597e94e7a1")
+	assert.Equal(t, err, errors.New("record not found"))
 }

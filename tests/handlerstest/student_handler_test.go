@@ -264,6 +264,13 @@ func TestUpdateStudent(t *testing.T) {
 			tokenGiven:   "sbjadkjasjdahsdgjlkjasdjkai",
 			errorMessage: "Unauthorized",
 		},
+		{
+			id:           AuthID,
+			updateJSON:   `{"country": "GB", "mobile_number":"07564356660"}`,
+			statusCode:   401,
+			tokenGiven:   "",
+			errorMessage: "Unauthorized",
+		},
 		// Email unique and immutable as it's student email
 		{
 			id:           AuthID,
@@ -298,6 +305,90 @@ func TestUpdateStudent(t *testing.T) {
 			assert.Equal(t, responseMap["mobile_number"], v.updateNumber)
 		}
 		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
+}
+
+func TestDeleteStudent(t *testing.T) {
+
+	var AuthEmail, AuthPassword, AuthID string
+
+	err := refreshStudentTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	students, err := seedStudents()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	authStudent := students[0]
+	AuthID = authStudent.ID.String()
+	AuthEmail = authStudent.Email
+	AuthPassword = "password"
+	unauthStudent := students[1]
+
+	token, err := server.SignIn(AuthEmail, AuthPassword)
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	tokenString := fmt.Sprintf("Bearer %v", token)
+
+	samples := []struct {
+		id           string
+		statusCode   int
+		tokenGiven   string
+		errorMessage string
+	}{
+		{
+			id:           AuthID,
+			statusCode:   204,
+			tokenGiven:   tokenString,
+			errorMessage: "",
+		},
+		{
+			id:           AuthID,
+			statusCode:   401,
+			tokenGiven:   "",
+			errorMessage: "Unauthorized",
+		},
+		{
+			id:           AuthID,
+			statusCode:   401,
+			tokenGiven:   "jhsjhakjhskajf",
+			errorMessage: "Unauthorized",
+		},
+		{
+			id:           unauthStudent.ID.String(),
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized",
+		},
+	}
+
+	for _, v := range samples {
+		req, err := http.NewRequest("DELETE", "/users", nil)
+		if err != nil {
+			t.Errorf("This is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"id": v.id})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.DeleteStudent)
+
+		req.Header.Set("Authorization", v.tokenGiven)
+
+		handler.ServeHTTP(rr, req)
+		assert.Equal(t, rr.Code, v.statusCode)
+
+		if v.statusCode == 401 && v.errorMessage != "" {
+			responseMap := make(map[string]interface{})
+			err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+			if err != nil {
+				t.Errorf("Cannot convert to json: %v", err)
+			}
 			assert.Equal(t, responseMap["error"], v.errorMessage)
 		}
 	}
