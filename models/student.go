@@ -20,7 +20,7 @@ type Token struct {
 
 // User -> Struct to hold basic user information
 type User struct {
-	Email      string `json:"email" gorm:"unique;not null"`
+	Email      string `json:"email" gorm:"unique;not null"` // to add  gorm:"unique;not null"
 	Password   string `json:"password"`
 	IsVerified bool   `json:"verified"`
 }
@@ -64,6 +64,12 @@ func (student *Student) BeforeSave() error {
 func (student *Student) Validate(action string) error {
 	switch strings.ToLower(action) {
 	case "update":
+		if student.CountryCode != "" && student.MobileNumber != "" {
+			if _, err := phonenumbers.Parse(student.MobileNumber, student.CountryCode); err != nil {
+				return errors.New("Phone number ain't valid")
+			}
+		}
+
 		return nil
 
 	case "create":

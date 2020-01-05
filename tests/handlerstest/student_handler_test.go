@@ -204,6 +204,7 @@ func TestUpdateStudent(t *testing.T) {
 	AuthID = authStudent.ID.String()
 	AuthEmail = authStudent.Email
 	AuthPassword = "password"
+	unauthStudent := students[1]
 
 	token, err := server.SignIn(AuthEmail, AuthPassword)
 	if err != nil {
@@ -235,6 +236,14 @@ func TestUpdateStudent(t *testing.T) {
 			tokenGiven:   tokenString,
 			errorMessage: "Phone number ain't valid",
 		},
+		{
+			id:           unauthStudent.ID.String(),
+			updateJSON:   `{"country": "GB", "mobile_number":"07564356660"}`,
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized",
+		},
+		// More cases to cover
 	}
 
 	for _, v := range samples {
