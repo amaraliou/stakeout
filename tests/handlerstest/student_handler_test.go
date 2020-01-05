@@ -143,11 +143,12 @@ func TestGetStudentByID(t *testing.T) {
 	}
 
 	studentSample := []struct {
-		id         string
-		statusCode int
-		email      string
-		firstName  string
-		lastName   string
+		id           string
+		statusCode   int
+		email        string
+		firstName    string
+		lastName     string
+		errorMessage string
 	}{
 		{
 			id:         student.ID.String(),
@@ -155,6 +156,16 @@ func TestGetStudentByID(t *testing.T) {
 			email:      student.Email,
 			firstName:  student.FirstName,
 			lastName:   student.LastName,
+		},
+		{
+			id:           "jdsfksjdfj",
+			statusCode:   500,
+			errorMessage: "pq: invalid input syntax for type uuid: \"jdsfksjdfj\"",
+		},
+		{
+			id:           "1b56f03e-823c-4861-bee3-223c82e91c1f",
+			statusCode:   500,
+			errorMessage: "Student not found",
 		},
 	}
 
@@ -182,6 +193,9 @@ func TestGetStudentByID(t *testing.T) {
 			assert.Equal(t, student.Email, responseMap["email"])
 			assert.Equal(t, student.FirstName, responseMap["first_name"])
 			assert.Equal(t, student.LastName, responseMap["last_name"])
+		}
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
 		}
 	}
 }
@@ -242,6 +256,21 @@ func TestUpdateStudent(t *testing.T) {
 			statusCode:   401,
 			tokenGiven:   tokenString,
 			errorMessage: "Unauthorized",
+		},
+		{
+			id:           AuthID,
+			updateJSON:   `{"country": "GB", "mobile_number":"07564356660"}`,
+			statusCode:   401,
+			tokenGiven:   "sbjadkjasjdahsdgjlkjasdjkai",
+			errorMessage: "Unauthorized",
+		},
+		// Email unique and immutable as it's student email
+		{
+			id:           AuthID,
+			updateJSON:   `{"email":"2310549a@student.gla.ac.uk", "country": "GB", "mobile_number":"07564356660"}`,
+			statusCode:   500,
+			tokenGiven:   tokenString,
+			errorMessage: "pq: duplicate key value violates unique constraint \"students_email_key\"",
 		},
 		// More cases to cover
 	}

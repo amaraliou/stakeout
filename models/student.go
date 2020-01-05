@@ -144,12 +144,12 @@ func (student *Student) FindAllStudents(db *gorm.DB) (*[]Student, error) {
 func (student *Student) FindStudentByID(db *gorm.DB, id string) (*Student, error) {
 
 	err := db.Debug().Model(Student{}).Where("id = ?", id).Take(&student).Error
-	if err != nil {
-		return &Student{}, err
-	}
-
 	if gorm.IsRecordNotFoundError(err) {
 		return &Student{}, errors.New("Student not found")
+	}
+
+	if err != nil {
+		return &Student{}, err
 	}
 
 	return student, nil
