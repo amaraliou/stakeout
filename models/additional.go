@@ -15,12 +15,23 @@ type CurrentLocation struct {
 // Address -> struct to hold address information
 type Address struct {
 	gorm.Model
-	AddressLine1 string `json:"address_1"`
-	AddressLine2 string `json:"address_2"`
-	TownOrCity   string `json:"town_or_city"`
-	County       string `json:"county"`
-	Postcode     string `json:"postcode"` // To implement postcode validation
-	Primary      bool   `json:"is_primary_address"`
+	AddressNumber int    `json:"number"`
+	AddressLine1  string `json:"address_1"`
+	AddressLine2  string `json:"address_2"`
+	TownOrCity    string `json:"town_or_city"`
+	County        string `json:"county"`
+	Postcode      string `json:"postcode"` // To implement postcode validation
+	Primary       bool   `json:"is_primary_address"`
+}
+
+// ShopAddress -> composite struct for Shop
+type ShopAddress struct {
+	AddressNumber int    `json:"number"`
+	AddressLine1  string `json:"address_1"`
+	AddressLine2  string `json:"address_2"`
+	TownOrCity    string `json:"town_or_city"`
+	County        string `json:"county"`
+	Postcode      string `json:"postcode"` // To implement postcode validation
 }
 
 // Validate address -> to configure
