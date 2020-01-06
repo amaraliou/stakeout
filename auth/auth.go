@@ -89,6 +89,27 @@ func ExtractTokenID(r *http.Request) (string, error) {
 	return "", nil
 }
 
+// ExtractTokenAdminID ...
+func ExtractTokenAdminID(r *http.Request) (string, error) {
+
+	tokenString := ExtractToken(r)
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("API_SECRET")), nil
+	})
+	if err != nil {
+		return "", err
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
+		adminID := claims["admin_id"].(string)
+		return adminID, nil
+	}
+	return "", nil
+}
+
 //Pretty display the claims licely in the terminal
 func Pretty(data interface{}) {
 	b, err := json.MarshalIndent(data, "", " ")
