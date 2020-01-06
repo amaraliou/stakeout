@@ -93,7 +93,7 @@ func (server *Server) UpdateShop(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	// Verify who the current user is to check permissions (maybe change the endpoint to /api/v1/admin/<admin_id:uuid>/shop/<shop_id:uuid>)
+	// Verify who the current user/admin is to check permissions (maybe change the endpoint to /api/v1/admin/<admin_id:uuid>/shop/<shop_id:uuid>)
 
 	updatedShop, err := shop.UpdateShop(server.DB, shopID)
 	if err != nil {
@@ -107,4 +107,18 @@ func (server *Server) UpdateShop(writer http.ResponseWriter, request *http.Reque
 // DeleteShop -> handles DELETE /api/v1/shop/<id:uuid> (make sure products are deleted as well)
 func (server *Server) DeleteShop(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	shopID := vars["id"]
+	shop := models.Shop{}
+
+	// Verify who the current user/admin is to check permissions (maybe change the endpoint to /api/v1/admin/<admin_id:uuid>/shop/<shop_id:uuid>)
+
+	_, err := shop.DeleteShop(server.DB, shopID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	writer.Header().Set("Entity", fmt.Sprintf("%s", shopID))
+	responses.JSON(writer, http.StatusNoContent, "")
 }
