@@ -78,6 +78,7 @@ func (server *Server) UpdateStudent(writer http.ResponseWriter, request *http.Re
 	vars := mux.Vars(request)
 	studentID := vars["id"]
 	student := models.Student{}
+
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
 		responses.ERROR(writer, http.StatusUnprocessableEntity, err)

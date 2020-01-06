@@ -72,6 +72,36 @@ func (server *Server) GetShopByID(writer http.ResponseWriter, request *http.Requ
 // UpdateShop -> handles PUT /api/v1/shop/<id:uuid>
 func (server *Server) UpdateShop(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	shopID := vars["id"]
+	shop := models.Shop{}
+
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+	}
+
+	err = json.Unmarshal(body, &shop)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	err = shop.Validate("")
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	// Verify who the current user is to check permissions (maybe change the endpoint to /api/v1/admin/<admin_id:uuid>/shop/<shop_id:uuid>)
+
+	updatedShop, err := shop.UpdateShop(server.DB, shopID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, updatedShop)
 }
 
 // DeleteShop -> handles DELETE /api/v1/shop/<id:uuid> (make sure products are deleted as well)
