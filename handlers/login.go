@@ -42,7 +42,38 @@ func (server *Server) Login(writer http.ResponseWriter, request *http.Request) {
 	responses.JSON(writer, http.StatusOK, token)
 }
 
-// SignIn -> retrieves JWT token given username and password
+// AdminLogin -> handles POST /api/v1/admin/login
+func (server *Server) AdminLogin(writer http.ResponseWriter, request *http.Request) {
+
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	admin := models.Admin{}
+	err = json.Unmarshal(body, &admin)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	err = admin.Validate("")
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	token, err := server.AdminSignIn(admin.Email, admin.Password)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, token)
+}
+
+// SignIn -> retrieves user JWT token given username and password
 func (server *Server) SignIn(email, password string) (string, error) {
 
 	var err error
@@ -58,4 +89,10 @@ func (server *Server) SignIn(email, password string) (string, error) {
 	}
 
 	return auth.CreateToken(student.ID)
+}
+
+// AdminSignIn -> retrieves admin JWT token given username and password
+func (server *Server) AdminSignIn(email, password string) (string, error) {
+	// To implement
+	return "", nil
 }
