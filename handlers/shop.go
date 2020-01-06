@@ -44,6 +44,14 @@ func (server *Server) CreateShop(writer http.ResponseWriter, request *http.Reque
 // GetShops -> handles GET /api/v1/shop/
 func (server *Server) GetShops(writer http.ResponseWriter, request *http.Request) {
 
+	shop := models.Shop{}
+	shops, err := shop.FindAllShops(server.DB)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, shops)
 }
 
 // GetShop -> handles GET /api/v1/shop/<id:uuid>
