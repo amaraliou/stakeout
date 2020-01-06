@@ -54,6 +54,24 @@ func TokenValid(r *http.Request) error {
 	return nil
 }
 
+// IsAdminToken ...
+func IsAdminToken(r *http.Request) (bool, error) {
+	tokenString := ExtractToken(r)
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("API_SECRET")), nil
+	})
+	if err != nil {
+		return false, err
+	}
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims["is_admin"].(bool), nil
+	}
+	return false, nil
+}
+
 // ExtractToken ...
 func ExtractToken(r *http.Request) string {
 	keys := r.URL.Query()
