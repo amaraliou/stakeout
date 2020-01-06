@@ -8,6 +8,7 @@ import (
 
 	"github.com/amaraliou/apetitoso/models"
 	"github.com/amaraliou/apetitoso/responses"
+	"github.com/gorilla/mux"
 )
 
 // CreateShop -> handles POST /api/v1/shop/
@@ -54,9 +55,18 @@ func (server *Server) GetShops(writer http.ResponseWriter, request *http.Request
 	responses.JSON(writer, http.StatusOK, shops)
 }
 
-// GetShop -> handles GET /api/v1/shop/<id:uuid>
-func (server *Server) GetShop(writer http.ResponseWriter, request *http.Request) {
+// GetShopByID -> handles GET /api/v1/shop/<id:uuid>
+func (server *Server) GetShopByID(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	shop := models.Shop{}
+	shopRetrieved, err := shop.FindShopByID(server.DB, vars["id"])
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, shopRetrieved)
 }
 
 // UpdateShop -> handles PUT /api/v1/shop/<id:uuid>
