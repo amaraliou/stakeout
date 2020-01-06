@@ -19,10 +19,21 @@ func CreateToken(userID uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["user_id"] = userID.String()
+	claims["is_admin"] = false
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix() //Token expires after 1 hour
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("API_SECRET")))
+}
 
+// CreateAdminToken ...
+func CreateAdminToken(adminID uuid.UUID) (string, error) {
+	claims := jwt.MapClaims{}
+	claims["authorized"] = true
+	claims["admin_id"] = adminID.String()
+	claims["is_admin"] = true
+	claims["exp"] = time.Now().Add(time.Hour * 2).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(os.Getenv("API_SECRET")))
 }
 
 // TokenValid ...
