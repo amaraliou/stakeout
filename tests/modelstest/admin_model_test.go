@@ -70,7 +70,25 @@ func TestCreateAdmin(t *testing.T) {
 }
 
 func TestFindAdminByID(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	err := refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admin, err := seedOneAdmin()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	foundAdmin, err := adminInstance.FindAdminByID(server.DB, admin.ID.String())
+	if err != nil {
+		t.Errorf("This is the error getting the admin: %v\n", err)
+		return
+	}
+
+	assert.Equal(t, foundAdmin.ID, admin.ID)
+	assert.Equal(t, foundAdmin.Email, admin.Email)
 }
 
 func TestUpdateAdmin(t *testing.T) {
