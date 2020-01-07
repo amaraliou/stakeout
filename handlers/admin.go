@@ -129,4 +129,40 @@ func (server *Server) UpdateAdmin(writer http.ResponseWriter, request *http.Requ
 // DeleteAdmin -> handles DELETE /api/v1/admin/<id:uuid>
 func (server *Server) DeleteAdmin(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	adminID := vars["id"]
+	admin := models.Admin{}
+
+	isAdmin, err := auth.IsAdminToken(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	if !isAdmin {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This is not an admin token"))
+		return
+	}
+
+	tokenID, err := auth.ExtractTokenAdminID(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	if tokenID != "" && tokenID != adminID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
+	}
+
+	_, err = admin.DeleteAdmin(server.DB, adminID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	// To implement the case where shop is deleted as well
+
+	writer.Header().Set("Entity", fmt.Sprintf("%s", adminID))
+	responses.JSON(writer, http.StatusNoContent, "")
 }
