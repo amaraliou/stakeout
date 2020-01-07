@@ -8,6 +8,7 @@ import (
 
 	"github.com/amaraliou/apetitoso/models"
 	"github.com/amaraliou/apetitoso/responses"
+	"github.com/gorilla/mux"
 )
 
 // CreateAdmin -> handles POST /api/v1/admin/
@@ -44,11 +45,21 @@ func (server *Server) CreateAdmin(writer http.ResponseWriter, request *http.Requ
 // GetAdmins -> handles GET /api/v1/admin/
 func (server *Server) GetAdmins(writer http.ResponseWriter, request *http.Request) {
 
+	admin := models.Admin{}
+	admins, err := admin.FindAllAdmins(server.DB)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, admins)
 }
 
 // GetAdminByID -> handles GET /api/v1/admin/<id:uuid>
 func (server *Server) GetAdminByID(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	admin := models.Admin{}
 }
 
 // UpdateAdmin -> handles PUT /api/v1/admin/<id:uuid>
