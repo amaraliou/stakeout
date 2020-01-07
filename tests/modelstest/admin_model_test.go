@@ -145,6 +145,10 @@ func TestDeleteAdminWithoutShop(t *testing.T) {
 	assert.Equal(t, isDeleted, int64(1))
 }
 
+func TestDeleteAdminWithShop(t *testing.T) {
+	assert.Equal(t, 1, 1)
+}
+
 func TestDeleteWrongAdmin(t *testing.T) {
 
 	err := refreshAdminTable()

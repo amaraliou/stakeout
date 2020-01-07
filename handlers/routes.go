@@ -19,4 +19,6 @@ func (server *Server) initializeRoutes() {
 	server.Router.HandleFunc("/students/{id}", middlewares.SetMiddlewareJSON(server.GetStudentByID)).Methods("GET")
 	server.Router.HandleFunc("/students/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(server.UpdateStudent))).Methods("PUT")
 	server.Router.HandleFunc("/students/{id}", middlewares.SetMiddlewareAuthentication(server.DeleteStudent)).Methods("DELETE")
+
+	// Admin routes
 }
