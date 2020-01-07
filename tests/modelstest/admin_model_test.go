@@ -1,6 +1,7 @@
 package modelstest
 
 import (
+	"errors"
 	"log"
 	"testing"
 
@@ -97,4 +98,20 @@ func TestUpdateAdmin(t *testing.T) {
 
 func TestDeleteAdmin(t *testing.T) {
 	assert.Equal(t, 1, 1)
+}
+
+func TestDeleteWrongAdmin(t *testing.T) {
+
+	err := refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = seedOneAdmin()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = adminInstance.DeleteAdmin(server.DB, "8258e9fd-7769-4eb5-8b82-5f597e94e7a1")
+	assert.Equal(t, err, errors.New("record not found"))
 }
