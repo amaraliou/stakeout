@@ -42,7 +42,31 @@ func TestFindAllAdminsNonExistentTable(t *testing.T) {
 }
 
 func TestCreateAdmin(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	err := refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	newAdmin := models.Admin{
+		User: models.User{
+			Email:      "testemail@email.com",
+			Password:   "password",
+			IsVerified: true,
+		},
+		FirstName: "Donald WW3",
+		LastName:  "Trump",
+	}
+
+	createdAdmin, err := newAdmin.CreateAdmin(server.DB)
+	if err != nil {
+		t.Errorf("This is the error creating the admin: %v\n", err)
+		return
+	}
+
+	assert.Equal(t, newAdmin.Email, createdAdmin.Email)
+	assert.Equal(t, newAdmin.FirstName, createdAdmin.FirstName)
+	assert.Equal(t, newAdmin.LastName, createdAdmin.LastName)
 }
 
 func TestFindAdminByID(t *testing.T) {
