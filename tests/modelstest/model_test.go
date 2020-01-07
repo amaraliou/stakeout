@@ -85,7 +85,7 @@ func seedOneStudent() (models.Student, error) {
 
 	err := server.DB.Model(&models.Student{}).Create(&student).Error
 	if err != nil {
-		log.Fatalf("cannot seed students table: %v", err)
+		return models.Student{}, err
 	}
 	return student, nil
 }
@@ -143,7 +143,7 @@ func seedOneAdmin() (models.Admin, error) {
 
 	admin := models.Admin{
 		User: models.User{
-			Email:      "email1@email.com",
+			Email:      "email@email.com",
 			Password:   "password",
 			IsVerified: true,
 		},
@@ -153,7 +153,42 @@ func seedOneAdmin() (models.Admin, error) {
 
 	err := server.DB.Model(&models.Admin{}).Create(&admin).Error
 	if err != nil {
-		log.Fatalf("cannot seed admins table: %v", err)
+		return models.Admin{}, err
 	}
 	return admin, nil
+}
+
+func seedAdmins() error {
+
+	refreshAdminTable()
+
+	admins := []models.Admin{
+		models.Admin{
+			User: models.User{
+				Email:      "email1@email.com",
+				Password:   "password",
+				IsVerified: true,
+			},
+			FirstName: "Donald WW3",
+			LastName:  "Trump",
+		},
+		models.Admin{
+			User: models.User{
+				Email:      "email2@email.com",
+				Password:   "password",
+				IsVerified: true,
+			},
+			FirstName: "Kim Jong",
+			LastName:  "Un",
+		},
+	}
+
+	for i := range admins {
+		err := server.DB.Model(&models.Admin{}).Create(&admins[i]).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
