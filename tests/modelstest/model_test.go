@@ -50,6 +50,18 @@ func refreshStudentTable() error {
 	return nil
 }
 
+func refreshAdminTable() error {
+	err := server.DB.DropTableIfExists(&models.Admin{}).Error
+	if err != nil {
+		return err
+	}
+	err = server.DB.AutoMigrate(&models.Admin{}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func seedOneStudent() (models.Student, error) {
 
 	refreshStudentTable()
@@ -123,4 +135,25 @@ func seedStudents() error {
 	}
 
 	return nil
+}
+
+func seedOneAdmin() (models.Admin, error) {
+
+	refreshAdminTable()
+
+	admin := models.Admin{
+		User: models.User{
+			Email:      "email1@email.com",
+			Password:   "password",
+			IsVerified: true,
+		},
+		FirstName: "Donald WW3",
+		LastName:  "Trump",
+	}
+
+	err := server.DB.Model(&models.Admin{}).Create(&admin).Error
+	if err != nil {
+		log.Fatalf("cannot seed admins table: %v", err)
+	}
+	return admin, nil
 }
