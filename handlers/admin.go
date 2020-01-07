@@ -60,6 +60,13 @@ func (server *Server) GetAdminByID(writer http.ResponseWriter, request *http.Req
 
 	vars := mux.Vars(request)
 	admin := models.Admin{}
+	adminRetrieved, err := admin.FindAdminByID(server.DB, vars["id"])
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, adminRetrieved)
 }
 
 // UpdateAdmin -> handles PUT /api/v1/admin/<id:uuid>
