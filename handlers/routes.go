@@ -4,6 +4,9 @@ import "github.com/amaraliou/apetitoso/middlewares"
 
 func (server *Server) initializeRoutes() {
 
+	// /api/v1 prefix
+	server.Router.PathPrefix("/api/v1")
+
 	// Home route
 	server.Router.HandleFunc("/", middlewares.SetMiddlewareJSON(server.Home)).Methods("GET")
 
