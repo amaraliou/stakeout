@@ -93,11 +93,56 @@ func TestFindAdminByID(t *testing.T) {
 }
 
 func TestUpdateAdmin(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	err := refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admin, err := seedOneAdmin()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	adminUpdate := models.Admin{
+		User: models.User{
+			Email:      "email@email.com",
+			Password:   "password",
+			IsVerified: true,
+		},
+		FirstName: "Emmanuel",
+		LastName:  "Macron",
+	}
+
+	updatedAdmin, err := adminUpdate.UpdateAdmin(server.DB, admin.ID.String())
+	if err != nil {
+		t.Errorf("This is the error updating the admin: %v\n", err)
+		return
+	}
+
+	assert.Equal(t, updatedAdmin.ID, adminUpdate.ID)
+	assert.Equal(t, updatedAdmin.FirstName, adminUpdate.FirstName)
 }
 
-func TestDeleteAdmin(t *testing.T) {
-	assert.Equal(t, 1, 1)
+func TestDeleteAdminWithoutShop(t *testing.T) {
+
+	err := refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admin, err := seedOneAdmin()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	isDeleted, err := adminInstance.DeleteAdmin(server.DB, admin.ID.String())
+	if err != nil {
+		t.Errorf("This is the error deleting the admin: %v\n", err)
+		return
+	}
+
+	assert.Equal(t, isDeleted, int64(1))
 }
 
 func TestDeleteWrongAdmin(t *testing.T) {

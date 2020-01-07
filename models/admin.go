@@ -111,7 +111,7 @@ func (admin *Admin) DeleteAdmin(db *gorm.DB, id string) (int64, error) {
 		return db.RowsAffected, errors.New("Couldn't retrieve remaining admins")
 	}
 
-	if len(*remainingAdmins) == 0 {
+	if len(*remainingAdmins) == 0 && shopID != "00000000-0000-0000-0000-000000000000" {
 
 		shopRowsAffected, err := shop.DeleteShop(originalDB, shopID)
 		if err != nil {
