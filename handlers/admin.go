@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/amaraliou/apetitoso/auth"
 	"github.com/amaraliou/apetitoso/models"
 	"github.com/amaraliou/apetitoso/responses"
 	"github.com/gorilla/mux"
@@ -72,6 +74,56 @@ func (server *Server) GetAdminByID(writer http.ResponseWriter, request *http.Req
 // UpdateAdmin -> handles PUT /api/v1/admin/<id:uuid>
 func (server *Server) UpdateAdmin(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	adminID := vars["id"]
+	admin := models.Admin{}
+
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+	}
+
+	err = json.Unmarshal(body, &admin)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	isAdmin, err := auth.IsAdminToken(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	if !isAdmin {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This is not an admin token"))
+		return
+	}
+
+	tokenID, err := auth.ExtractTokenAdminID(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	if tokenID != adminID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
+	}
+
+	err = admin.Validate("update")
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	updatedAdmin, err := admin.UpdateAdmin(server.DB, adminID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, updatedAdmin)
 }
 
 // DeleteAdmin -> handles DELETE /api/v1/admin/<id:uuid>
