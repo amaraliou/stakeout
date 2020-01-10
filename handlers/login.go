@@ -93,6 +93,18 @@ func (server *Server) SignIn(email, password string) (string, error) {
 
 // AdminSignIn -> retrieves admin JWT token given username and password
 func (server *Server) AdminSignIn(email, password string) (string, error) {
-	// To implement
-	return "", nil
+
+	var err error
+	admin := models.Admin{}
+	err = server.DB.Debug().Model(&models.Admin{}).Where("email = ?", email).Take(&admin).Error
+	if err != nil {
+		return "", err
+	}
+
+	err = models.VerifyPassword(admin.Password, password)
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		return "", err
+	}
+
+	return auth.CreateAdminToken(admin.ID)
 }

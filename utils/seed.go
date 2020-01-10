@@ -26,14 +26,26 @@ var students = []models.Student{
 	},
 }
 
+var admins = []models.Admin{
+	models.Admin{
+		User: models.User{
+			Email:      "admin@gmail.com",
+			Password:   "password",
+			IsVerified: true,
+		},
+		FirstName: "Admin",
+		LastName:  "Admin",
+	},
+}
+
 // Load ... making my linter happy
 func Load(db *gorm.DB) {
 
-	err := db.Debug().DropTableIfExists(&models.Student{}).Error
+	err := db.Debug().DropTableIfExists(&models.Student{}, &models.Admin{}).Error
 	if err != nil {
 		log.Fatalf("cannot drop table: %v", err)
 	}
-	err = db.Debug().AutoMigrate(&models.Student{}).Error
+	err = db.Debug().AutoMigrate(&models.Student{}, &models.Admin{}).Error
 	if err != nil {
 		log.Fatalf("cannot migrate table: %v", err)
 	}
@@ -42,6 +54,13 @@ func Load(db *gorm.DB) {
 		err = db.Debug().Model(&models.Student{}).Create(&students[i]).Error
 		if err != nil {
 			log.Fatalf("cannot seed students table: %v", err)
+		}
+	}
+
+	for i := range admins {
+		err = db.Debug().Model(&models.Admin{}).Create(&admins[i]).Error
+		if err != nil {
+			log.Fatalf("cannot seed admins table: %v", err)
 		}
 	}
 }
