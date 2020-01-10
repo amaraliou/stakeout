@@ -3,7 +3,9 @@ package models
 import (
 	"errors"
 	"log"
+	"strings"
 
+	"github.com/badoux/checkmail"
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
 )
@@ -20,6 +22,23 @@ type Admin struct {
 
 // Validate ...
 func (admin *Admin) Validate(action string) error {
+	switch strings.ToLower(action) {
+	case "create":
+		if admin.Email == "" {
+			return errors.New("Required Email")
+		}
+
+		if admin.Password == "" {
+			return errors.New("Required Password")
+		}
+
+		if err := checkmail.ValidateFormat(admin.Email); err != nil {
+			return errors.New("Invalid Email")
+		}
+
+	default:
+		return nil
+	}
 	return nil
 }
 
