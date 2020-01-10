@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/amaraliou/apetitoso/models"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -86,6 +87,33 @@ func TestCreateAdmin(t *testing.T) {
 
 func TestGetAdmins(t *testing.T) {
 
+	err := refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = seedAdmins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req, err := http.NewRequest("GET", "/admins", nil)
+	if err != nil {
+		t.Errorf("this is the error: %v\n", err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.GetAdmins)
+	handler.ServeHTTP(rr, req)
+
+	var admins []models.Admin
+	err = json.Unmarshal([]byte(rr.Body.String()), &admins)
+	if err != nil {
+		log.Fatalf("Cannot convert to json: %v\n", err)
+	}
+
+	assert.Equal(t, rr.Code, http.StatusOK)
+	assert.Equal(t, len(admins), 2)
 }
 
 func TestGetAdminByID(t *testing.T) {
