@@ -51,6 +51,18 @@ func refreshStudentTable() error {
 	return nil
 }
 
+func refreshAdminTable() error {
+	err := server.DB.DropTableIfExists(&models.Admin{}).Error
+	if err != nil {
+		return err
+	}
+	err = server.DB.AutoMigrate(&models.Admin{}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func seedOneStudent() (models.Student, error) {
 
 	refreshStudentTable()
@@ -124,4 +136,60 @@ func seedStudents() ([]models.Student, error) {
 	}
 
 	return students, nil
+}
+
+func seedOneAdmin() (models.Admin, error) {
+
+	refreshAdminTable()
+
+	admin := models.Admin{
+		User: models.User{
+			Email:      "email@email.com",
+			Password:   "password",
+			IsVerified: true,
+		},
+		FirstName: "Donald WW3",
+		LastName:  "Trump",
+	}
+
+	err := server.DB.Model(&models.Admin{}).Create(&admin).Error
+	if err != nil {
+		return models.Admin{}, err
+	}
+	return admin, nil
+}
+
+func seedAdmins() ([]models.Admin, error) {
+
+	refreshAdminTable()
+
+	admins := []models.Admin{
+		models.Admin{
+			User: models.User{
+				Email:      "email1@email.com",
+				Password:   "password",
+				IsVerified: true,
+			},
+			FirstName: "Donald WW3",
+			LastName:  "Trump",
+		},
+		models.Admin{
+			User: models.User{
+				Email:      "email2@email.com",
+				Password:   "password",
+				IsVerified: true,
+			},
+			FirstName: "Kim Jong",
+			LastName:  "Un",
+		},
+	}
+
+	for i := range admins {
+		err := server.DB.Model(&models.Admin{}).Create(&admins[i]).Error
+		if err != nil {
+			return []models.Admin{}, err
+		}
+	}
+
+	return admins, nil
 }
