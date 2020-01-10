@@ -91,6 +91,10 @@ func (admin *Admin) FindAllAdminsWithShopID(db *gorm.DB, shopID string) (*[]Admi
 func (admin *Admin) FindAdminByID(db *gorm.DB, id string) (*Admin, error) {
 
 	err := db.Debug().Model(Admin{}).Where("id = ?", id).Take(&admin).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return &Admin{}, errors.New("Admin not found")
+	}
+
 	if err != nil {
 		return &Admin{}, err
 	}

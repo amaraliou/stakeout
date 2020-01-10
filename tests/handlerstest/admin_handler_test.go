@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/amaraliou/apetitoso/models"
+	"github.com/gorilla/mux"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -118,6 +119,73 @@ func TestGetAdmins(t *testing.T) {
 
 func TestGetAdminByID(t *testing.T) {
 
+	err := refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admin, err := seedOneAdmin()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	adminSample := []struct {
+		id           string
+		statusCode   int
+		email        string
+		firstName    string
+		lastName     string
+		errorMessage string
+	}{
+		{
+			id:         admin.ID.String(),
+			statusCode: 200,
+			email:      admin.Email,
+			firstName:  admin.FirstName,
+			lastName:   admin.LastName,
+		},
+		{
+			id:           "jdsfksjdfj",
+			statusCode:   500,
+			errorMessage: "pq: invalid input syntax for type uuid: \"jdsfksjdfj\"",
+		},
+		{
+			id:           "1b56f03e-823c-4861-bee3-223c82e91c1f",
+			statusCode:   500,
+			errorMessage: "Admin not found",
+		},
+	}
+
+	for _, v := range adminSample {
+
+		req, err := http.NewRequest("GET", "/admins", nil)
+		if err != nil {
+			t.Errorf("this is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"id": v.id})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.GetAdminByID)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			log.Fatalf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+
+		if v.statusCode == 200 {
+			assert.Equal(t, admin.Email, responseMap["email"])
+			assert.Equal(t, admin.FirstName, responseMap["first_name"])
+			assert.Equal(t, admin.LastName, responseMap["last_name"])
+		}
+
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
 
 func TestUpdateAdmin(t *testing.T) {
