@@ -190,6 +190,79 @@ func TestGetAdminByID(t *testing.T) {
 
 func TestUpdateAdmin(t *testing.T) {
 
+	var AuthEmail, AuthPassword, AuthID string
+
+	err := refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admins, err := seedAdmins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	authAdmin := admins[0]
+	AuthID = authAdmin.ID.String()
+	AuthEmail = authAdmin.Email
+	AuthPassword = "password"
+	// unauthAdmin := admins[1]
+
+	token, err := server.AdminSignIn(AuthEmail, AuthPassword)
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	tokenString := fmt.Sprintf("Bearer %v", token)
+
+	samples := []struct {
+		id              string
+		updateJSON      string
+		updateFirstName string
+		updateLastName  string
+		statusCode      int
+		tokenGiven      string
+		errorMessage    string
+	}{
+		{
+			id:              AuthID,
+			updateJSON:      `{"first_name": "Aziz", "last_name": "Bruh"}`,
+			updateFirstName: "Aziz",
+			updateLastName:  "Bruh",
+			statusCode:      200,
+			tokenGiven:      tokenString,
+			errorMessage:    "",
+		},
+		// Add other cases
+	}
+
+	for _, v := range samples {
+
+		req, err := http.NewRequest("PUT", "/admins", bytes.NewBufferString(v.updateJSON))
+		if err != nil {
+			t.Errorf("This is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"id": v.id})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.UpdateAdmin)
+		req.Header.Set("Authorization", v.tokenGiven)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			t.Errorf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+		if v.statusCode == 200 {
+			assert.Equal(t, responseMap["first_name"], v.updateFirstName)
+			assert.Equal(t, responseMap["last_name"], v.updateLastName)
+		}
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
 
 func TestDeleteAdmin(t *testing.T) {

@@ -229,7 +229,6 @@ func TestUpdateStudent(t *testing.T) {
 	samples := []struct {
 		id           string
 		updateJSON   string
-		updateEmail  string
 		updateNumber string
 		statusCode   int
 		tokenGiven   string
