@@ -15,6 +15,7 @@ import (
 var server = handlers.Server{}
 var studentInstance = models.Student{}
 var adminInstance = models.Admin{}
+var shopInstance = models.Shop{}
 
 func TestMain(m *testing.M) {
 	var err error
