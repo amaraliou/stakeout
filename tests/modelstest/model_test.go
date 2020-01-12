@@ -208,3 +208,28 @@ func seedAdmins() error {
 
 	return nil
 }
+
+func seedOneShop() (models.Shop, error) {
+
+	refreshShopTable()
+
+	shop := models.Shop{
+		Name:        "Starbucks",
+		Logo:        "https://starbucks.com",
+		Description: "blah blah blah",
+		Latitude:    45.5,
+		Longitude:   45.5,
+		ShopAddress: models.ShopAddress{
+			Postcode:      "G12 8BG",
+			AddressNumber: 10,
+			AddressLine1:  "Bruh Street",
+			TownOrCity:    "Bruh Town",
+		},
+	}
+
+	err := server.DB.Model(&models.Shop{}).Create(&shop).Error
+	if err != nil {
+		return models.Shop{}, err
+	}
+	return shop, nil
+}
