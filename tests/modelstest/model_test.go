@@ -44,6 +44,7 @@ func refreshStudentTable() error {
 	if err != nil {
 		return err
 	}
+
 	err = server.DB.AutoMigrate(&models.Student{}).Error
 	if err != nil {
 		return err
@@ -56,7 +57,21 @@ func refreshAdminTable() error {
 	if err != nil {
 		return err
 	}
+
 	err = server.DB.AutoMigrate(&models.Admin{}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func refreshShopTable() error {
+	err := server.DB.DropTableIfExists(&models.Shop{}).Error
+	if err != nil {
+		return err
+	}
+
+	err = server.DB.AutoMigrate(&models.Shop{}).Error
 	if err != nil {
 		return err
 	}
