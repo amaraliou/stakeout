@@ -197,7 +197,17 @@ func TestUpdateAdmin(t *testing.T) {
 		log.Fatal(err)
 	}
 
+	err = refreshStudentTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	admins, err := seedAdmins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	student, err := seedOneStudent()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -206,7 +216,13 @@ func TestUpdateAdmin(t *testing.T) {
 	AuthID = authAdmin.ID.String()
 	AuthEmail = authAdmin.Email
 	AuthPassword = "password"
-	// unauthAdmin := admins[1]
+	unauthAdmin := admins[1]
+
+	studentToken, err := server.SignIn(student.Email, "password")
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
 
 	token, err := server.AdminSignIn(AuthEmail, AuthPassword)
 	if err != nil {
@@ -232,7 +248,34 @@ func TestUpdateAdmin(t *testing.T) {
 			tokenGiven:      tokenString,
 			errorMessage:    "",
 		},
-		// Add other cases
+		{
+			id:           unauthAdmin.ID.String(),
+			updateJSON:   `{"first_name": "Aziz", "last_name": "Bruh"}`,
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized",
+		},
+		{
+			id:           AuthID,
+			updateJSON:   `{"first_name": "Aziz", "last_name": "Bruh"}`,
+			statusCode:   422,
+			tokenGiven:   "kjaskjdkfjksssd",
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			id:           AuthID,
+			updateJSON:   `{"first_name": "Aziz", "last_name": "Bruh"}`,
+			statusCode:   401,
+			tokenGiven:   studentTokenString,
+			errorMessage: "Unauthorized: This is not an admin token",
+		},
+		{
+			id:           AuthID,
+			updateJSON:   `{"email": "email1@email.com", "password": "password", "first_name": "Aziz", "last_name": "Bruh"}`,
+			statusCode:   500,
+			tokenGiven:   tokenString,
+			errorMessage: "pq: duplicate key value violates unique constraint \"admins_email_key\"",
+		},
 	}
 
 	for _, v := range samples {
@@ -267,4 +310,100 @@ func TestUpdateAdmin(t *testing.T) {
 
 func TestDeleteAdmin(t *testing.T) {
 
+	var AuthEmail, AuthPassword, AuthID string
+
+	err := refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = refreshStudentTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admins, err := seedAdmins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	student, err := seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	authAdmin := admins[0]
+	AuthID = authAdmin.ID.String()
+	AuthEmail = authAdmin.Email
+	AuthPassword = "password"
+	unauthAdmin := admins[1]
+
+	studentToken, err := server.SignIn(student.Email, "password")
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
+
+	token, err := server.AdminSignIn(AuthEmail, AuthPassword)
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	tokenString := fmt.Sprintf("Bearer %v", token)
+
+	samples := []struct {
+		id           string
+		statusCode   int
+		tokenGiven   string
+		errorMessage string
+	}{
+		{
+			id:           AuthID,
+			statusCode:   204,
+			tokenGiven:   tokenString,
+			errorMessage: "",
+		},
+		{
+			id:           AuthID,
+			statusCode:   422,
+			tokenGiven:   "ljfalksjhfjsklhd",
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			id:           unauthAdmin.ID.String(),
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized",
+		},
+		{
+			id:           AuthID,
+			statusCode:   401,
+			tokenGiven:   studentTokenString,
+			errorMessage: "Unauthorized: This is not an admin token",
+		},
+	}
+
+	for _, v := range samples {
+		req, err := http.NewRequest("DELETE", "/admins", nil)
+		if err != nil {
+			t.Errorf("This is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"id": v.id})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.DeleteAdmin)
+
+		req.Header.Set("Authorization", v.tokenGiven)
+
+		handler.ServeHTTP(rr, req)
+		assert.Equal(t, rr.Code, v.statusCode)
+
+		if v.statusCode == 401 && v.errorMessage != "" {
+			responseMap := make(map[string]interface{})
+			err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+			if err != nil {
+				t.Errorf("Cannot convert to json: %v", err)
+			}
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
