@@ -9,6 +9,50 @@ import (
 	"gopkg.in/go-playground/assert.v1"
 )
 
+func TestFindAllShops(t *testing.T) {
+
+	err := refreshShopTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = seedShops()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shops, err := shopInstance.FindAllShops(server.DB)
+	if err != nil {
+		t.Errorf("This is the error getting the shops: %v\n", err)
+		return
+	}
+
+	assert.Equal(t, len(*shops), 2)
+}
+
+func TestFindShopByID(t *testing.T) {
+
+	err := refreshShopTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shop, err := seedOneShop()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	foundShop, err := shopInstance.FindShopByID(server.DB, shop.ID.String())
+	if err != nil {
+		t.Errorf("This is the error getting the shop: %v\n", err)
+		return
+	}
+
+	assert.Equal(t, foundShop.ID, shop.ID)
+	assert.Equal(t, foundShop.Name, shop.Name)
+	assert.Equal(t, foundShop.Postcode, shop.Postcode)
+}
+
 func TestCreateShop(t *testing.T) {
 
 	err := refreshShopTable()
@@ -38,73 +82,6 @@ func TestCreateShop(t *testing.T) {
 
 	assert.Equal(t, newShop.Name, savedShop.Name)
 	assert.Equal(t, newShop.Postcode, savedShop.Postcode)
-}
-
-func TestFindAllShops(t *testing.T) {
-
-	err := refreshShopTable()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = seedShops()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	shops, err := shopInstance.FindAllShops(server.DB)
-	if err != nil {
-		t.Errorf("This is the error getting the shops: %v\n", err)
-		return
-	}
-
-	assert.Equal(t, len(*shops), 2)
-}
-
-func TestNonExistentShopsTable(t *testing.T) {
-
-	err := server.DB.DropTableIfExists(&models.Shop{}).Error
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = shopInstance.FindAllShops(server.DB)
-	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
-
-	_, err = shopInstance.FindShopByID(server.DB, "random_id")
-	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
-
-	_, err = shopInstance.CreateShop(server.DB)
-	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
-
-	_, err = shopInstance.UpdateShop(server.DB, "random_id")
-	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
-
-	_, err = shopInstance.DeleteShop(server.DB, "random_id")
-	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
-}
-
-func TestFindShopByID(t *testing.T) {
-
-	err := refreshShopTable()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	shop, err := seedOneShop()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	foundShop, err := shopInstance.FindShopByID(server.DB, shop.ID.String())
-	if err != nil {
-		t.Errorf("This is the error getting the shop: %v\n", err)
-		return
-	}
-
-	assert.Equal(t, foundShop.ID, shop.ID)
-	assert.Equal(t, foundShop.Name, shop.Name)
-	assert.Equal(t, foundShop.Postcode, shop.Postcode)
 }
 
 func TestUpdateShop(t *testing.T) {
@@ -162,4 +139,27 @@ func TestDeleteShop(t *testing.T) {
 	}
 
 	assert.Equal(t, isDeleted, int64(1))
+}
+
+func TestNonExistentShopsTable(t *testing.T) {
+
+	err := server.DB.DropTableIfExists(&models.Shop{}).Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = shopInstance.FindAllShops(server.DB)
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
+
+	_, err = shopInstance.FindShopByID(server.DB, "random_id")
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
+
+	_, err = shopInstance.CreateShop(server.DB)
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
+
+	_, err = shopInstance.UpdateShop(server.DB, "random_id")
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
+
+	_, err = shopInstance.DeleteShop(server.DB, "random_id")
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"shops\" does not exist")
 }
