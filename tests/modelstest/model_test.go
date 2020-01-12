@@ -233,3 +233,46 @@ func seedOneShop() (models.Shop, error) {
 	}
 	return shop, nil
 }
+
+func seedShops() error {
+
+	refreshShopTable()
+
+	shops := []models.Shop{
+		models.Shop{
+			Name:        "Starbucks 1",
+			Logo:        "https://starbucks-one.com",
+			Description: "blah blah blah",
+			Latitude:    45.5,
+			Longitude:   45.5,
+			ShopAddress: models.ShopAddress{
+				Postcode:      "G12 8BG",
+				AddressNumber: 10,
+				AddressLine1:  "Bruh Street",
+				TownOrCity:    "Bruh Town",
+			},
+		},
+		models.Shop{
+			Name:        "Starbucks 2",
+			Logo:        "https://starbucks-two.com",
+			Description: "blah blah blah",
+			Latitude:    55.5,
+			Longitude:   55.5,
+			ShopAddress: models.ShopAddress{
+				Postcode:      "G12 8BG",
+				AddressNumber: 10,
+				AddressLine1:  "Bruh Avenue",
+				TownOrCity:    "Bruh City",
+			},
+		},
+	}
+
+	for i := range shops {
+		err := server.DB.Model(&models.Shop{}).Create(&shops[i]).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
