@@ -164,16 +164,49 @@ func (server *Server) UpdateShop(writer http.ResponseWriter, request *http.Reque
 	responses.JSON(writer, http.StatusOK, updatedShop)
 }
 
-// DeleteShop -> handles DELETE /api/v1/shop/<id:uuid> (make sure products are deleted as well)
+// DeleteShop -> handles DELETE /api/v1/admins/<admin_id:uuid>/shops/<shop_id:uuid>
 func (server *Server) DeleteShop(writer http.ResponseWriter, request *http.Request) {
 
 	vars := mux.Vars(request)
-	shopID := vars["id"]
+	shopID := vars["shop_id"]
+	adminID := vars["admin_id"]
 	shop := models.Shop{}
+	admin := models.Admin{}
 
-	// Verify who the current user/admin is to check permissions (maybe change the endpoint to /api/v1/admin/<admin_id:uuid>/shop/<shop_id:uuid>)
+	isAdmin, err := auth.IsAdminToken(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
 
-	_, err := shop.DeleteShop(server.DB, shopID)
+	if !isAdmin {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This is not an admin token"))
+		return
+	}
+
+	tokenID, err := auth.ExtractTokenAdminID(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	if tokenID != adminID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
+	}
+
+	currentAdmin, err := admin.FindAdminByID(server.DB, adminID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	if currentAdmin.ShopID.String() != shopID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: You are not the admin for this shop"))
+		return
+	}
+
+	_, err = shop.DeleteShop(server.DB, shopID)
 	if err != nil {
 		responses.ERROR(writer, http.StatusInternalServerError, err)
 		return
