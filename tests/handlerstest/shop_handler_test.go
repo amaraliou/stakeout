@@ -82,6 +82,16 @@ func TestCreateShop(t *testing.T) {
 		log.Fatal(err)
 	}
 
+	err = refreshStudentTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	student, err := seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	err = server.DB.Model(&models.Admin{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		log.Fatal(err)
@@ -96,6 +106,13 @@ func TestCreateShop(t *testing.T) {
 	AuthID = authAdmin.ID.String()
 	AuthEmail = authAdmin.Email
 	AuthPassword = "password"
+	unauthAdmin := admins[1]
+
+	studentToken, err := server.SignIn(student.Email, "password")
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
 
 	token, err := server.AdminSignIn(AuthEmail, AuthPassword)
 	if err != nil {
@@ -163,7 +180,27 @@ func TestCreateShop(t *testing.T) {
 			tokenGiven:   tokenString,
 			errorMessage: "Required town or city",
 		},
-		// More cases to cover
+		{
+			id:           AuthID,
+			createJSON:   `{"name":"Some random shop", "description":"bruh", "postcode":"G12 *BY", "number":8, "address_1": "Amar Street", "town_or_city":"Glasgow"}`,
+			statusCode:   422,
+			tokenGiven:   "shfdjsds",
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			id:           unauthAdmin.ID.String(),
+			createJSON:   `{"name":"Some random shop", "description":"bruh", "postcode":"G12 *BY", "number":8, "address_1": "Amar Street", "town_or_city":"Glasgow"}`,
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized",
+		},
+		{
+			id:           AuthID,
+			createJSON:   `{"name":"Some random shop", "description":"bruh", "postcode":"G12 *BY", "number":8, "address_1": "Amar Street", "town_or_city":"Glasgow"}`,
+			statusCode:   401,
+			tokenGiven:   studentTokenString,
+			errorMessage: "Unauthorized: This is not an admin token",
+		},
 	}
 
 	for _, v := range samples {
@@ -197,7 +234,7 @@ func TestCreateShop(t *testing.T) {
 			assert.Equal(t, responseMap["postcode"], admin.Shop.Postcode)
 		}
 
-		if v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
 			assert.Equal(t, responseMap["error"], v.errorMessage)
 		}
 	}
