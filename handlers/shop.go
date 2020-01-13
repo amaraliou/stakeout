@@ -66,13 +66,16 @@ func (server *Server) CreateShop(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	currentAdmin, err := admin.FindAdminByID(server.DB, adminID)
+	_, err = admin.FindAdminByID(server.DB, adminID)
 	if err != nil {
 		responses.ERROR(writer, http.StatusInternalServerError, err)
 		return
 	}
 
-	currentAdmin.ShopID = shopCreated.ID
+	currentAdmin := models.Admin{
+		ShopID: shopCreated.ID,
+	}
+
 	_, err = currentAdmin.UpdateAdmin(server.DB, adminID)
 	if err != nil {
 		responses.ERROR(writer, http.StatusInternalServerError, err)

@@ -87,11 +87,12 @@ func TestCreateShop(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	authAdmin, err := seedOneAdmin()
+	admins, err := seedAdmins()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	authAdmin := admins[0]
 	AuthID = authAdmin.ID.String()
 	AuthEmail = authAdmin.Email
 	AuthPassword = "password"

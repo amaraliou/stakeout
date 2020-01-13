@@ -166,7 +166,7 @@ func seedAdmins() ([]models.Admin, error) {
 	admins := []models.Admin{
 		models.Admin{
 			User: models.User{
-				Email:      "email1@email.com",
+				Email:      "email_a@email.com",
 				Password:   "password",
 				IsVerified: true,
 			},
@@ -175,7 +175,7 @@ func seedAdmins() ([]models.Admin, error) {
 		},
 		models.Admin{
 			User: models.User{
-				Email:      "email2@email.com",
+				Email:      "email_b@email.com",
 				Password:   "password",
 				IsVerified: true,
 			},
