@@ -83,12 +83,11 @@ func TestCreateShop(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	admins, err := seedAdmins()
+	authAdmin, err := seedOneAdmin()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	authAdmin := admins[0]
 	AuthID = authAdmin.ID.String()
 	AuthEmail = authAdmin.Email
 	AuthPassword = "password"
@@ -183,8 +182,13 @@ func TestCreateShop(t *testing.T) {
 
 		assert.Equal(t, rr.Code, v.statusCode)
 		if v.statusCode == 201 {
+			admin, err := authAdmin.FindAdminByID(server.DB, AuthID)
+			if err != nil {
+				log.Fatal(err)
+			}
 			assert.Equal(t, responseMap["name"], v.shopName)
 			assert.Equal(t, responseMap["postcode"], v.shopPostcode)
+			assert.Equal(t, responseMap["ID"], admin.ShopID.String())
 		}
 
 		if v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
