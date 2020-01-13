@@ -30,4 +30,9 @@ func (server *Server) initializeRoutes() {
 	server.Router.HandleFunc("/admins/{id}", middlewares.SetMiddlewareAdminAuthentication(middlewares.SetMiddlewareJSON(server.UpdateAdmin))).Methods("PUT")
 	server.Router.HandleFunc("/admins/{id}", middlewares.SetMiddlewareAuthentication(server.DeleteAdmin)).Methods("DELETE")
 
+	// Shop routes
+	server.Router.HandleFunc("/admins/{admin_id}/shops", middlewares.SetMiddlewareAdminAuthentication(middlewares.SetMiddlewareJSON(server.CreateShop))).Methods("POST")
+	server.Router.HandleFunc("/shops", middlewares.SetMiddlewareAuthentication(server.GetShops)).Methods("GET")
+	server.Router.HandleFunc("/shops/{id}", middlewares.SetMiddlewareJSON(server.GetShopByID)).Methods("GET")
+
 }

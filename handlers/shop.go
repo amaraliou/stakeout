@@ -2,17 +2,22 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/amaraliou/apetitoso/auth"
 	"github.com/amaraliou/apetitoso/models"
 	"github.com/amaraliou/apetitoso/responses"
 	"github.com/gorilla/mux"
 )
 
-// CreateShop -> handles POST /api/v1/shop/
+// CreateShop -> handles POST /api/v1/admins/<admin_id:uuid>/shops/
 func (server *Server) CreateShop(writer http.ResponseWriter, request *http.Request) {
+
+	vars := mux.Vars(request)
+	adminID := vars["admin_id"]
 
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -23,6 +28,28 @@ func (server *Server) CreateShop(writer http.ResponseWriter, request *http.Reque
 	err = json.Unmarshal(body, &shop)
 	if err != nil {
 		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	isAdmin, err := auth.IsAdminToken(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	if !isAdmin {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This is not an admin token"))
+		return
+	}
+
+	tokenID, err := auth.ExtractTokenAdminID(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	if tokenID != adminID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
 
@@ -42,7 +69,7 @@ func (server *Server) CreateShop(writer http.ResponseWriter, request *http.Reque
 	responses.JSON(writer, http.StatusCreated, shopCreated)
 }
 
-// GetShops -> handles GET /api/v1/shop/
+// GetShops -> handles GET /api/v1/shops/
 func (server *Server) GetShops(writer http.ResponseWriter, request *http.Request) {
 
 	shop := models.Shop{}
@@ -69,12 +96,14 @@ func (server *Server) GetShopByID(writer http.ResponseWriter, request *http.Requ
 	responses.JSON(writer, http.StatusOK, shopRetrieved)
 }
 
-// UpdateShop -> handles PUT /api/v1/shop/<id:uuid>
+// UpdateShop -> handles PUT /api/v1/admins/<admin_id:uuid>/shop/<shop_id:uuid>
 func (server *Server) UpdateShop(writer http.ResponseWriter, request *http.Request) {
 
 	vars := mux.Vars(request)
-	shopID := vars["id"]
+	shopID := vars["shop_id"]
+	adminID := vars["admin_id"]
 	shop := models.Shop{}
+	admin := models.Admin{}
 
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -93,7 +122,38 @@ func (server *Server) UpdateShop(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	// Verify who the current user/admin is to check permissions (maybe change the endpoint to /api/v1/admin/<admin_id:uuid>/shop/<shop_id:uuid>)
+	isAdmin, err := auth.IsAdminToken(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	if !isAdmin {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This is not an admin token"))
+		return
+	}
+
+	tokenID, err := auth.ExtractTokenAdminID(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	if tokenID != adminID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
+	}
+
+	currentAdmin, err := admin.FindAdminByID(server.DB, adminID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	if currentAdmin.ShopID.String() != shopID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: You are not the admin for this shop"))
+		return
+	}
 
 	updatedShop, err := shop.UpdateShop(server.DB, shopID)
 	if err != nil {
