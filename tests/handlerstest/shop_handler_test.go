@@ -69,6 +69,49 @@ func seedOneShop() (models.Shop, error) {
 	return shop, nil
 }
 
+func seedShops() ([]models.Shop, error) {
+
+	refreshShopTable()
+
+	shops := []models.Shop{
+		models.Shop{
+			Name:        "Starbucks",
+			Logo:        "https://starbucks.com",
+			Description: "blah blah blah",
+			Latitude:    45.5,
+			Longitude:   45.5,
+			ShopAddress: models.ShopAddress{
+				Postcode:      "G12 8BG",
+				AddressNumber: 10,
+				AddressLine1:  "Bruh Street",
+				TownOrCity:    "Bruh Town",
+			},
+		},
+		models.Shop{
+			Name:        "Costa",
+			Logo:        "https://costa.com",
+			Description: "blah blah blah",
+			Latitude:    55.5,
+			Longitude:   55.5,
+			ShopAddress: models.ShopAddress{
+				Postcode:      "G12 8BY",
+				AddressNumber: 10,
+				AddressLine1:  "Bruh Avenue",
+				TownOrCity:    "Bruh City",
+			},
+		},
+	}
+
+	for i := range shops {
+		err := server.DB.Model(&models.Shop{}).Create(&shops[i]).Error
+		if err != nil {
+			return []models.Shop{}, err
+		}
+	}
+
+	return shops, nil
+}
+
 func TestCreateShop(t *testing.T) {
 
 	var AuthEmail, AuthPassword, AuthID string
@@ -238,5 +281,63 @@ func TestCreateShop(t *testing.T) {
 			assert.Equal(t, responseMap["error"], v.errorMessage)
 		}
 	}
+}
 
+func TestGetShops(t *testing.T) {
+
+	err := refreshShopTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shops, err := seedShops()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = server.DB.Model(&models.Admin{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admins, err := seedAdmins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i := range shops {
+		currentAdmin := models.Admin{
+			ShopID: shops[i].ID,
+		}
+
+		admin, err := currentAdmin.UpdateAdmin(server.DB, admins[i].ID.String())
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		admins[i] = *admin
+	}
+
+	req, err := http.NewRequest("GET", "/shops", nil)
+	if err != nil {
+		t.Errorf("this is the error: %v\n", err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.GetShops)
+	handler.ServeHTTP(rr, req)
+
+	var receivedShops []models.Shop
+	err = json.Unmarshal([]byte(rr.Body.String()), &receivedShops)
+	if err != nil {
+		log.Fatalf("Cannot convert to json: %v\n", err)
+	}
+
+	assert.Equal(t, rr.Code, http.StatusOK)
+	assert.Equal(t, len(shops), 2)
 }
