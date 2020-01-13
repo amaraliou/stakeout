@@ -51,7 +51,8 @@ func init() {
 	}
 
 	db = conn
-	db.Debug().AutoMigrate()
+	db.Debug().AutoMigrate(&Admin{}, &Shop{}, &Student{})
+	err = db.Model(&Admin{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
 }
 
 // GetDB -> Return current DB instance

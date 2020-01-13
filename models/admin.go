@@ -99,6 +99,15 @@ func (admin *Admin) FindAdminByID(db *gorm.DB, id string) (*Admin, error) {
 		return &Admin{}, err
 	}
 
+	if admin.ShopID.String() != "00000000-0000-0000-0000-000000000000" {
+		shop := &Shop{}
+		err = db.Debug().Model(Shop{}).Where("id = ?", admin.ShopID.String()).Take(&shop).Error
+		if err != nil {
+			return admin, errors.New("Shop associated with this admin not found")
+		}
+		admin.Shop = *shop
+	}
+
 	return admin, nil
 }
 

@@ -72,13 +72,17 @@ func seedOneShop() (models.Shop, error) {
 func TestCreateShop(t *testing.T) {
 
 	var AuthEmail, AuthPassword, AuthID string
-
-	err := refreshShopTable()
+	err := refreshAdminTable()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = refreshAdminTable()
+	err = refreshShopTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = server.DB.Model(&models.Admin{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -189,6 +193,7 @@ func TestCreateShop(t *testing.T) {
 			assert.Equal(t, responseMap["name"], v.shopName)
 			assert.Equal(t, responseMap["postcode"], v.shopPostcode)
 			assert.Equal(t, responseMap["ID"], admin.ShopID.String())
+			assert.Equal(t, responseMap["postcode"], admin.Shop.Postcode)
 		}
 
 		if v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
