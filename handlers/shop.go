@@ -18,13 +18,14 @@ func (server *Server) CreateShop(writer http.ResponseWriter, request *http.Reque
 
 	vars := mux.Vars(request)
 	adminID := vars["admin_id"]
+	shop := models.Shop{}
 
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
 		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
 	}
 
-	shop := models.Shop{}
 	err = json.Unmarshal(body, &shop)
 	if err != nil {
 		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
