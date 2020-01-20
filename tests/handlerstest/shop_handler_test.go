@@ -409,15 +409,15 @@ func TestUpdateShop(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	/* err = refreshStudentTable()
+	err = refreshStudentTable()
 	if err != nil {
 		log.Fatal(err)
-	} */
+	}
 
-	/* student, err := seedOneStudent()
+	student, err := seedOneStudent()
 	if err != nil {
 		log.Fatal(err)
-	} */
+	}
 
 	err = refreshAdminTable()
 	if err != nil {
@@ -434,13 +434,14 @@ func TestUpdateShop(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	//unauthAdmin := admins[0]
+	unauthAdmin := admins[0]
+	unauthShop := shops[0]
 
-	/* studentToken, err := server.SignIn(student.Email, "password")
+	studentToken, err := server.SignIn(student.Email, "password")
 	if err != nil {
 		log.Fatalf("cannot login: %v\n", err)
-	} */
-	//studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
+	}
+	studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
 
 	for i := range shops {
 		currentAdmin := models.Admin{
@@ -489,7 +490,46 @@ func TestUpdateShop(t *testing.T) {
 			tokenGiven:   tokenString,
 			errorMessage: "",
 		},
-		// Many more to cover
+		{
+			adminID:      unauthAdmin.ID.String(),
+			shopID:       shopID,
+			updateJSON:   `{"name": "Some random shop 2"}`,
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized",
+		},
+		{
+			adminID:      AuthID,
+			shopID:       shopID,
+			updateJSON:   `{"name": "Some random shop 2"}`,
+			statusCode:   401,
+			tokenGiven:   studentTokenString,
+			errorMessage: "Unauthorized: This is not an admin token",
+		},
+		{
+			adminID:      AuthID,
+			shopID:       shopID,
+			updateJSON:   `{"name": "Some random shop 2"}`,
+			statusCode:   422,
+			tokenGiven:   "sbjadkjasjdahsdgjlkjasdjkai",
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			adminID:      AuthID,
+			shopID:       shopID,
+			updateJSON:   `{"name": "Some random shop 2"}`,
+			statusCode:   422,
+			tokenGiven:   "",
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			adminID:      AuthID,
+			shopID:       unauthShop.ID.String(),
+			updateJSON:   `{"name": "Some random shop 2"}`,
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized: You are not the admin for this shop",
+		},
 	}
 
 	for _, v := range samples {
