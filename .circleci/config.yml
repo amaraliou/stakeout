@@ -23,3 +23,13 @@ jobs:
 
       # specify any bash command here prefixed with `run: `
       - run: go get -v -t -d ./...
+      - run:
+          name: Run tests
+          environment:
+            DB_USER: aliouamar
+            DB_PASS: password
+            DB_NAME: apetitoso_test
+            DB_HOST: localhost
+            DB_PORT: 5432
+            DB_TYPE: postgres
+          command: make coverage
