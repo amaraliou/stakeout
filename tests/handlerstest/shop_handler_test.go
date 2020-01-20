@@ -31,12 +31,6 @@ func refreshShopTable() error {
 func seedOneShop() (models.Shop, error) {
 
 	refreshShopTable()
-	refreshAdminTable()
-
-	admins, err := seedAdmins()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	shop := models.Shop{
 		Name:        "Starbucks",
@@ -52,16 +46,7 @@ func seedOneShop() (models.Shop, error) {
 		},
 	}
 
-	admin := admins[0]
-
-	err = server.DB.Model(&models.Shop{}).Create(&shop).Error
-	if err != nil {
-		return models.Shop{}, err
-	}
-
-	admin.ShopID = shop.ID
-
-	err = server.DB.Model(models.Admin{}).Updates(&admin).Error
+	err := server.DB.Model(&models.Shop{}).Create(&shop).Error
 	if err != nil {
 		return models.Shop{}, err
 	}
@@ -340,4 +325,73 @@ func TestGetShops(t *testing.T) {
 
 	assert.Equal(t, rr.Code, http.StatusOK)
 	assert.Equal(t, len(shops), 2)
+}
+
+func TestGetShopByID(t *testing.T) {
+
+	err := refreshShopTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shop, err := seedOneShop()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shopSample := []struct {
+		id           string
+		statusCode   int
+		name         string
+		postcode     string
+		errorMessage string
+	}{
+		{
+			id:         shop.ID.String(),
+			statusCode: 200,
+			name:       shop.Name,
+			postcode:   shop.Postcode,
+		},
+		{
+			id:           "jdsfksjdfj",
+			statusCode:   500,
+			errorMessage: "pq: invalid input syntax for type uuid: \"jdsfksjdfj\"",
+		},
+		{
+			id:           "1b56f03e-823c-4861-bee3-223c82e91c1f",
+			statusCode:   500,
+			errorMessage: "Shop not found",
+		},
+	}
+
+	for _, v := range shopSample {
+
+		req, err := http.NewRequest("GET", "/shops", nil)
+		if err != nil {
+			t.Errorf("this is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"id": v.id})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.GetShopByID)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			log.Fatalf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+
+		if v.statusCode == 200 {
+			assert.Equal(t, shop.ID.String(), responseMap["ID"])
+			assert.Equal(t, shop.Name, responseMap["name"])
+			assert.Equal(t, shop.Postcode, responseMap["postcode"])
+		}
+
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
