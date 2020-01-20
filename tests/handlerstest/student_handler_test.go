@@ -368,7 +368,7 @@ func TestDeleteStudent(t *testing.T) {
 	}
 
 	for _, v := range samples {
-		req, err := http.NewRequest("DELETE", "/users", nil)
+		req, err := http.NewRequest("DELETE", "/students", nil)
 		if err != nil {
 			t.Errorf("This is the error: %v\n", err)
 		}
