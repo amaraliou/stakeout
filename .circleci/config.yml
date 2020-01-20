@@ -25,4 +25,3 @@ jobs:
       - run: go get gopkg.in/go-playground/assert.v1
       - run: go get golang.org/x/crypto/bcrypt
       - run: go get -v -t -d ./...
-      - run: make coverage
