@@ -583,10 +583,10 @@ func TestDeleteShop(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	/* student, err := seedOneStudent()
+	student, err := seedOneStudent()
 	if err != nil {
 		log.Fatal(err)
-	} */
+	}
 
 	err = refreshAdminTable()
 	if err != nil {
@@ -603,14 +603,14 @@ func TestDeleteShop(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	/* unauthAdmin := admins[0]
+	unauthAdmin := admins[0]
 	unauthShop := shops[0]
 
 	studentToken, err := server.SignIn(student.Email, "password")
 	if err != nil {
 		log.Fatalf("cannot login: %v\n", err)
 	}
-	studentTokenString := fmt.Sprintf("Bearer %v", studentToken) */
+	studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
 
 	for i := range shops {
 		currentAdmin := models.Admin{
@@ -650,10 +650,45 @@ func TestDeleteShop(t *testing.T) {
 	}{
 		{
 			adminID:      AuthID,
+			shopID:       unauthShop.ID.String(),
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized: You are not the admin for this shop",
+		},
+		{
+			adminID:      AuthID,
 			shopID:       shopID,
 			statusCode:   204,
 			tokenGiven:   tokenString,
 			errorMessage: "",
+		},
+		{
+			adminID:      AuthID,
+			shopID:       shopID,
+			statusCode:   422,
+			tokenGiven:   "",
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			adminID:      AuthID,
+			shopID:       shopID,
+			statusCode:   422,
+			tokenGiven:   "kjsklfsjsjdodw",
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			adminID:      AuthID,
+			shopID:       shopID,
+			statusCode:   401,
+			tokenGiven:   studentTokenString,
+			errorMessage: "Unauthorized: This is not an admin token",
+		},
+		{
+			adminID:      unauthAdmin.ID.String(),
+			shopID:       shopID,
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized",
 		},
 	}
 
@@ -674,7 +709,7 @@ func TestDeleteShop(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, rr.Code, v.statusCode)
-		if v.statusCode == 401 && v.errorMessage != "" {
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
 			responseMap := make(map[string]interface{})
 			err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
 			if err != nil {
