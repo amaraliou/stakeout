@@ -395,3 +395,132 @@ func TestGetShopByID(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdateShop(t *testing.T) {
+
+	var AuthEmail, AuthPassword, AuthID string
+	err := refreshShopTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shops, err := seedShops()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	/* err = refreshStudentTable()
+	if err != nil {
+		log.Fatal(err)
+	} */
+
+	/* student, err := seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	} */
+
+	err = refreshAdminTable()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = server.DB.Model(&models.Admin{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admins, err := seedAdmins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//unauthAdmin := admins[0]
+
+	/* studentToken, err := server.SignIn(student.Email, "password")
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	} */
+	//studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
+
+	for i := range shops {
+		currentAdmin := models.Admin{
+			ShopID: shops[i].ID,
+			User: models.User{
+				Password: "password",
+			},
+		}
+
+		admin, err := currentAdmin.UpdateAdmin(server.DB, admins[i].ID.String())
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		admins[i] = *admin
+	}
+
+	authAdmin := admins[1]
+	shop := shops[1]
+	shopID := shop.ID.String()
+	AuthID = authAdmin.ID.String()
+	AuthEmail = authAdmin.Email
+	AuthPassword = "password"
+
+	token, err := server.AdminSignIn(AuthEmail, AuthPassword)
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	tokenString := fmt.Sprintf("Bearer %v", token)
+
+	samples := []struct {
+		shopID       string
+		adminID      string
+		updateJSON   string
+		updateName   string
+		statusCode   int
+		tokenGiven   string
+		errorMessage string
+	}{
+		{
+			adminID:      AuthID,
+			shopID:       shopID,
+			updateJSON:   `{"name": "Some random shop 2"}`,
+			updateName:   "Some random shop 2",
+			statusCode:   200,
+			tokenGiven:   tokenString,
+			errorMessage: "",
+		},
+		// Many more to cover
+	}
+
+	for _, v := range samples {
+
+		req, err := http.NewRequest("PUT", "/shops", bytes.NewBufferString(v.updateJSON))
+		if err != nil {
+			t.Errorf("This is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{
+			"admin_id": v.adminID,
+			"shop_id":  v.shopID,
+		})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.UpdateShop)
+		req.Header.Set("Authorization", v.tokenGiven)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			t.Errorf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+		if v.statusCode == 200 {
+			assert.Equal(t, responseMap["name"], v.updateName)
+		}
+
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
+}

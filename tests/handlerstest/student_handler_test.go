@@ -282,7 +282,7 @@ func TestUpdateStudent(t *testing.T) {
 	}
 
 	for _, v := range samples {
-		req, err := http.NewRequest("PUT", "/users", bytes.NewBufferString(v.updateJSON))
+		req, err := http.NewRequest("PUT", "/students", bytes.NewBufferString(v.updateJSON))
 		if err != nil {
 			t.Errorf("This is the error: %v\n", err)
 		}
