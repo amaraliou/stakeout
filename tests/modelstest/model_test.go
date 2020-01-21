@@ -327,7 +327,7 @@ func seedOneProduct() (models.Product, error) {
 		Reward:        5,
 	}
 
-	err = server.DB.Model(&models.Product{}).Create(product).Error
+	err = server.DB.Model(&models.Product{}).Create(&product).Error
 	if err != nil {
 		return models.Product{}, err
 	}
