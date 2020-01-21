@@ -13,7 +13,7 @@ jobs:
           DB_PASS: postgres
           DB_NAME: postgres
           DB_HOST: localhost
-          DB_PORT: 5434
+          DB_PORT: 5432
           DB_TYPE: postgres
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -33,7 +33,7 @@ jobs:
           command: |
             for i in `seq 1 10`;
             do
-              nc -z localhost 5434 && echo Success && exit 0
+              nc -z localhost 5432 && echo Success && exit 0
               echo -n .
               sleep 2
             done
@@ -51,6 +51,6 @@ jobs:
             DB_PASS: postgres
             DB_NAME: postgres
             DB_HOST: localhost
-            DB_PORT: 5434
+            DB_PORT: 5432
             DB_TYPE: postgres
           command: make coverage
