@@ -40,6 +40,20 @@ func Database() {
 	}
 }
 
+func refreshEverything() error {
+	err := server.DB.DropTableIfExists(&models.Student{}, &models.Admin{}, &models.Product{}, &models.Shop{}).Error
+	if err != nil {
+		return err
+	}
+
+	err = server.DB.AutoMigrate(&models.Student{}, &models.Shop{}, &models.Admin{}, &models.Product{}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func refreshStudentTable() error {
 	err := server.DB.DropTableIfExists(&models.Student{}).Error
 	if err != nil {
@@ -76,6 +90,20 @@ func refreshShopTable() error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func refreshProductTable() error {
+	err := server.DB.DropTableIfExists(&models.Product{}).Error
+	if err != nil {
+		return err
+	}
+
+	err = server.DB.AutoMigrate(&models.Product{}).Error
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -270,6 +298,76 @@ func seedShops() error {
 
 	for i := range shops {
 		err := server.DB.Model(&models.Shop{}).Create(&shops[i]).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func seedOneProduct() (models.Product, error) {
+
+	refreshEverything()
+
+	shop, err := seedOneShop()
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	product := models.Product{
+		Name:          "Cappuccino",
+		Description:   "Froathy milk with decent coffee",
+		Code:          "STBCKS001",
+		Price:         2.95,
+		PriceCurrency: "GBP",
+		InSale:        false,
+		ShopID:        shop.ID,
+		Reward:        5,
+	}
+
+	err = server.DB.Model(&models.Product{}).Create(product).Error
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	return product, nil
+}
+
+func seedProducts() error {
+
+	refreshEverything()
+
+	shop, err := seedOneShop()
+	if err != nil {
+		return err
+	}
+
+	products := []models.Product{
+		models.Product{
+			Name:          "Cappuccino",
+			Description:   "Froathy milk with decent coffee",
+			Code:          "STBCKS001",
+			Price:         2.95,
+			PriceCurrency: "GBP",
+			InSale:        false,
+			ShopID:        shop.ID,
+			Reward:        5,
+		},
+		models.Product{
+			Name:          "Espresso",
+			Description:   "That shot of coffee you need to wake up",
+			Code:          "STBCKS002",
+			Price:         2.45,
+			PriceCurrency: "GBP",
+			InSale:        false,
+			ShopID:        shop.ID,
+			Reward:        3,
+		},
+	}
+
+	for i := range products {
+		err = server.DB.Model(&models.Product{}).Create(&products[i]).Error
 		if err != nil {
 			return err
 		}
