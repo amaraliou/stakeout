@@ -11,7 +11,7 @@ jobs:
         environment:
           DB_USER: postgres
           DB_PASS: postgres
-          DB_NAME: postgres
+          DB_NAME: apetitoso_test
           DB_HOST: localhost
           DB_PORT: 5432
           DB_TYPE: postgres
@@ -32,46 +32,45 @@ jobs:
       - run:
           name: Wait for db
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
-
-      - run:
-          name: Prepare Postgres extensions
-          command: psql -p 5432 -h localhost -U postgres -c 'create extension "uuid-ossp"'
       # specify any bash command here prefixed with `run: `
       - run:
           name: Create test database
           command: psql -p 5432 -h localhost -U postgres -c 'create database apetitoso_test'
+      - run:
+          name: Prepare Postgres extensions
+          command: psql -p 5432 -h localhost -U postgres -d apetitoso_test -c 'create extension if not exists "uuid-ossp"' #&& psql -p 5432 -h localhost -U postgres -c 'create extension if not exists "uuid-ossp"'
       - run: 
           name: Install dependencies
           command: go get -v -t -d ./...
 
-      - run:
-          name: Run models tests
-          environment:
-            DB_USER: postgres
-            DB_PASS: postgres
-            DB_NAME: postgres
-            DB_HOST: localhost
-            DB_PORT: 5432
-            DB_TYPE: postgres
-          command: make test_models
+      #- run:
+          #name: Run models tests
+          #environment:
+            #DB_USER: postgres
+            #DB_PASS: postgres
+            #DB_NAME: apetitoso_test
+            #DB_HOST: localhost
+            #DB_PORT: 5432
+            #DB_TYPE: postgres
+          #command: make test_models
+
+      #- run:
+          #name: Run handlers tests
+          #environment:
+            #DB_USER: postgres
+            #DB_PASS: postgres
+            #DB_NAME: apetitoso_test
+            #DB_HOST: localhost
+            #DB_PORT: 5432
+            #DB_TYPE: postgres
+          #command: make test_handlers
 
       - run:
-          name: Run handlers tests
+          name: Test and Coverage
           environment:
             DB_USER: postgres
             DB_PASS: postgres
-            DB_NAME: postgres
-            DB_HOST: localhost
-            DB_PORT: 5432
-            DB_TYPE: postgres
-          command: make test_handlers
-
-      - run:
-          name: Create cover profile
-          environment:
-            DB_USER: postgres
-            DB_PASS: postgres
-            DB_NAME: postgres
+            DB_NAME: apetitoso_test
             DB_HOST: localhost
             DB_PORT: 5432
             DB_TYPE: postgres
