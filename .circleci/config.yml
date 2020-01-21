@@ -40,7 +40,7 @@ jobs:
             echo Failed waiting for Postgres && exit 1
       - run:
           name: Prepare database
-          command: psql -U postgres postgres -c "create extension uuid-ossp"
+          command: psql -p 5432 -c "create extension uuid-ossp"
       # specify any bash command here prefixed with `run: `
       - run: go get -v -t -d ./...
       - run:
