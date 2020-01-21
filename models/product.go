@@ -113,10 +113,23 @@ func (product *Product) CreateProduct(db *gorm.DB) (*Product, error) {
 
 // UpdateProduct ...
 func (product *Product) UpdateProduct(db *gorm.DB, id string) (*Product, error) {
-	return &Product{}, nil
+
+	err := db.Debug().Model(Product{}).Updates(&product).Error
+	if err != nil {
+		return &Product{}, err
+	}
+	// More to cover
+
+	return product, nil
 }
 
 // DeleteProduct ...
 func (product *Product) DeleteProduct(db *gorm.DB, id string) (int64, error) {
-	return 0, nil
+
+	db = db.Debug().Model(&Product{}).Where("id = ?", id).Take(&Product{}).Delete(&Product{})
+	if db.Error != nil {
+		return 0, db.Error
+	}
+
+	return db.RowsAffected, nil
 }
