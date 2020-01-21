@@ -14,6 +14,7 @@ import (
 	"gopkg.in/go-playground/assert.v1"
 )
 
+// Start restructuring tests
 func TestCreateAdmin(t *testing.T) {
 
 	err := refreshAdminTable()
