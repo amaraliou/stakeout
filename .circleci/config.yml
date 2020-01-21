@@ -1,7 +1,7 @@
 # Golang CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
-version: 2.1
+version: 2
 jobs:
   build:
     docker:
@@ -34,9 +34,12 @@ jobs:
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
 
       - run:
-          name: Prepare database
+          name: Prepare Postgres extensions
           command: psql -p 5432 -h localhost -U postgres -c 'create extension "uuid-ossp"'
       # specify any bash command here prefixed with `run: `
+      - run:
+          name: Create test database
+          command: psql -p 5432 -h localhost -U postgres -c `create database apetitoso_test'
       - run: 
           name: Install dependencies
           command: go get -v -t -d ./...
