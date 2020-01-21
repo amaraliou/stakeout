@@ -16,6 +16,7 @@ var server = handlers.Server{}
 var studentInstance = models.Student{}
 var adminInstance = models.Admin{}
 var shopInstance = models.Shop{}
+var productInstance = models.Product{}
 
 func TestMain(m *testing.M) {
 	var err error
@@ -334,13 +335,13 @@ func seedOneProduct() (models.Product, error) {
 	return product, nil
 }
 
-func seedProducts() error {
+func seedProducts() ([]models.Product, error) {
 
 	refreshEverything()
 
 	shop, err := seedOneShop()
 	if err != nil {
-		return err
+		return []models.Product{}, err
 	}
 
 	products := []models.Product{
@@ -369,9 +370,9 @@ func seedProducts() error {
 	for i := range products {
 		err = server.DB.Model(&models.Product{}).Create(&products[i]).Error
 		if err != nil {
-			return err
+			return []models.Product{}, err
 		}
 	}
 
-	return nil
+	return products, nil
 }
