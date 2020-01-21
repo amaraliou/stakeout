@@ -11,16 +11,17 @@ import (
 // Product -> Struct to hold product information
 type Product struct {
 	Base
-	Name         string    `json:"name"`
-	Description  string    `json:"description"`
-	Code         string    `json:"code"`
-	Price        float32   `json:"price"`
-	InSale       bool      `json:"is_in_sale"`
-	Discount     int       `json:"discount"`
-	DiscountUnit string    `json:"discount_unit"`
-	SoldBy       Shop      `json:"sold_by" gorm:"foreignkey:ShopID"`
-	ShopID       uuid.UUID `json:"-" gorm:"shop_id"`
-	Reward       int       `json:"reward"`
+	Name          string    `json:"name"`
+	Description   string    `json:"description"`
+	Code          string    `json:"code"`
+	Price         float32   `json:"price"`
+	PriceCurrency string    `json:"price_currency"`
+	InSale        bool      `json:"is_in_sale"`
+	Discount      int       `json:"discount"`
+	DiscountUnit  string    `json:"discount_unit"`
+	SoldBy        Shop      `json:"sold_by" gorm:"foreignkey:ShopID"`
+	ShopID        uuid.UUID `json:"-" gorm:"shop_id"`
+	Reward        int       `json:"reward"`
 }
 
 // Validate ...
