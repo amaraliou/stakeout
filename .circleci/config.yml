@@ -39,7 +39,7 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run:
           name: Create test database
-          command: psql -p 5432 -h localhost -U postgres -c `create database apetitoso_test'
+          command: psql -p 5432 -h localhost -U postgres -c 'create database apetitoso_test'
       - run: 
           name: Install dependencies
           command: go get -v -t -d ./...
