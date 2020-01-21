@@ -68,7 +68,26 @@ func (product *Product) FindAllProductsByShop(db *gorm.DB, shopID string) (*[]Pr
 
 // FindProductByID ...
 func (product *Product) FindProductByID(db *gorm.DB, id string) (*Product, error) {
-	return &Product{}, nil
+
+	err := db.Debug().Model(Product{}).Where("id = ?", id).Take(&product).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return &Product{}, errors.New("Product not found")
+	}
+
+	if err != nil {
+		return &Product{}, err
+	}
+
+	if product.ShopID.String() != "00000000-0000-0000-0000-000000000000" {
+		shop := &Shop{}
+		err = db.Debug().Model(Shop{}).Where("id = ?", product.ShopID.String()).Take(&shop).Error
+		if err != nil {
+			return product, errors.New("Shop associated with this admin not found")
+		}
+		product.SoldBy = *shop
+	}
+
+	return product, nil
 }
 
 // CreateProduct ...
