@@ -29,15 +29,8 @@ jobs:
       - checkout
       - run: sudo apt install postgresql-client
       - run:
-          name: Waiting for PostgreSQL to start
-          command: |
-            for i in `seq 1 10`;
-            do
-              nc -z localhost 5432 && echo Success && exit 0
-              echo -n .
-              sleep 2
-            done
-            echo Failed waiting for Postgres && exit 1
+        name: Wait for db
+        command: dockerize -wait tcp://localhost:5432 -timeout 1m
       - run:
           name: Prepare database
           command: psql -p 5432 -c "create extension uuid-ossp"
