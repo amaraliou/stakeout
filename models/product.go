@@ -35,6 +35,10 @@ func (product *Product) Validate(action string) error {
 			return errors.New("Required product price")
 		}
 
+		if product.ShopID.String() == "00000000-0000-0000-0000-000000000000" {
+			return errors.New("Required shop")
+		}
+
 	default:
 		return nil
 	}
@@ -91,8 +95,20 @@ func (product *Product) FindProductByID(db *gorm.DB, id string) (*Product, error
 }
 
 // CreateProduct ...
-func (product *Product) CreateProduct(db *gorm.DB, shopID string) (*Product, error) {
-	return &Product{}, nil
+func (product *Product) CreateProduct(db *gorm.DB) (*Product, error) {
+
+	shop := &Shop{}
+	err := db.Debug().Model(Shop{}).Where("id = ?", product.ShopID.String()).Take(&shop).Error
+	if err != nil {
+		return &Product{}, errors.New("Shop doesn't exist, can't create product")
+	}
+
+	err = db.Debug().Create(&product).Error
+	if err != nil {
+		return &Product{}, err
+	}
+
+	return product, nil
 }
 
 // UpdateProduct ...
