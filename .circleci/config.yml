@@ -29,6 +29,16 @@ jobs:
       - checkout
       - run: sudo apt install postgresql-client
       - run:
+          name: Waiting for PostgreSQL to start
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z localhost 5432 && echo Success && exit 0
+              echo -n .
+              sleep 2
+            done
+            echo Failed waiting for Postgres && exit 1
+      - run:
           name: Prepare database
           command: psql -U postgres postgres -c "create extension uuid-ossp"
       # specify any bash command here prefixed with `run: `
