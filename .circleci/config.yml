@@ -27,6 +27,7 @@ jobs:
     working_directory: /go/src/github.com/amaraliou/apetitoso
     steps:
       - checkout
+      - run: sudo apt install postgresql-client
       - run:
           name: Prepare database
           command: psql -U postgres postgres -c "create extension uuid-ossp"
