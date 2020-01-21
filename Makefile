@@ -10,6 +10,8 @@ test_handlers:
 test_models:
 	@go test ./tests/modelstest/... -v -coverpkg=./... -coverprofile=models.out
 
-coverage: test_handlers test_models
+coverfile: test_handlers test_models
 	@gocovmerge ./handlers.out ./models.out > coverage.out
+
+coverage: coverfile
 	@go tool cover -html=coverage.out

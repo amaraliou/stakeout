@@ -28,17 +28,32 @@ jobs:
     steps:
       - checkout
       - run: sudo apt install postgresql-client
+
       - run:
           name: Wait for db
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
+
       - run:
           name: Prepare database
           command: psql -p 5432 -h localhost -U postgres -c 'create extension "uuid-ossp"'
       # specify any bash command here prefixed with `run: `
-      - run: go get -v -t -d ./...
+      - run: 
+          name: Install dependencies
+          command: go get -v -t -d ./...
+
+      - run:
+          name: Run models tests
+          environment:
+            DB_USER: postgres
+            DB_PASS: postgres
+            DB_NAME: postgres
+            DB_HOST: localhost
+            DB_PORT: 5432
+            DB_TYPE: postgres
+          command: make test_models
+
       - run:
           name: Run handlers tests
-
           environment:
             DB_USER: postgres
             DB_PASS: postgres
@@ -47,3 +62,14 @@ jobs:
             DB_PORT: 5432
             DB_TYPE: postgres
           command: make test_handlers
+
+      - run:
+          name: Create cover profile
+          environment:
+            DB_USER: postgres
+            DB_PASS: postgres
+            DB_NAME: postgres
+            DB_HOST: localhost
+            DB_PORT: 5432
+            DB_TYPE: postgres
+          command: make coverprofile
