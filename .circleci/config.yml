@@ -37,7 +37,7 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: go get -v -t -d ./...
       - run:
-          name: Run tests
+          name: Run handlers tests
 
           environment:
             DB_USER: postgres
@@ -46,4 +46,4 @@ jobs:
             DB_HOST: localhost
             DB_PORT: 5432
             DB_TYPE: postgres
-          command: make coverage
+          command: make test_handlers
