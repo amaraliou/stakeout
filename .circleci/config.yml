@@ -72,4 +72,4 @@ jobs:
             DB_HOST: localhost
             DB_PORT: 5432
             DB_TYPE: postgres
-          command: make coverprofile
+          command: make coverfile
