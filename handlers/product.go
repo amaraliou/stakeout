@@ -113,6 +113,57 @@ func (server *Server) GetProductsByShop(writer http.ResponseWriter, request *htt
 // Might need admin id
 func (server *Server) UpdateProduct(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	shopID := vars["shop_id"]
+	productID := vars["product_id"]
+	product := models.Product{}
+
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+	}
+
+	err = json.Unmarshal(body, &product)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	err = product.Validate("")
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	isAdmin, err := auth.IsAdminToken(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	if !isAdmin {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This is not an admin token"))
+		return
+	}
+
+	currentProduct, err := product.FindProductByID(server.DB, productID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	if currentProduct.ShopID.String() != shopID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This product does nto belong to the given shop"))
+		return
+	}
+
+	updatedProduct, err := product.UpdateProduct(server.DB, productID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, updatedProduct)
 }
 
 // DeleteProduct -> handles DELETE /api/v1/shops/<shop_id:uuid>/products/<id:uuid>
