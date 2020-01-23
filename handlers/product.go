@@ -98,6 +98,15 @@ func (server *Server) GetProductByID(writer http.ResponseWriter, request *http.R
 // GetProductsByShop -> handles GET /api/v1/shops/<shop_id:uuid>/products/
 func (server *Server) GetProductsByShop(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	product := models.Product{}
+	products, err := product.FindAllProductsByShop(server.DB, vars["shop_id"])
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, products)
 }
 
 // UpdateProduct -> handles PUT /api/v1/shops/<shop_id:uuid>/products/<id:uuid>
