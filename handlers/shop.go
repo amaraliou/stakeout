@@ -50,7 +50,7 @@ func (server *Server) CreateShop(writer http.ResponseWriter, request *http.Reque
 	}
 
 	if tokenID != adminID {
-		responses.ERROR(writer, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized"))
 		return
 	}
 
