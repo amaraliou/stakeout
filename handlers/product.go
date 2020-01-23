@@ -84,6 +84,15 @@ func (server *Server) GetProducts(writer http.ResponseWriter, request *http.Requ
 // GetProductByID -> handles Get /api/v1/products/<id:uuid>
 func (server *Server) GetProductByID(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	product := models.Product{}
+	productRetrieved, err := product.FindProductByID(server.DB, vars["id"])
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, productRetrieved)
 }
 
 // GetProductsByShop -> handles GET /api/v1/shops/<shop_id:uuid>/products/
