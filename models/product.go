@@ -109,6 +109,8 @@ func (product *Product) CreateProduct(db *gorm.DB) (*Product, error) {
 		return &Product{}, err
 	}
 
+	product.SoldBy = *shop
+
 	return product, nil
 }
 

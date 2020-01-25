@@ -1,9 +1,16 @@
 package handlerstest
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/amaraliou/apetitoso/models"
+	"github.com/gorilla/mux"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -92,7 +99,98 @@ func seedProducts() ([]models.Product, error) {
 }
 
 func TestCreateProduct(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	var AuthEmail, AuthPassword, AuthID string
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shop, err := seedOneShop()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = server.DB.Model(&models.Admin{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admins, err := seedAdmins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shopAdmin := models.Admin{
+		ShopID: shop.ID,
+	}
+
+	AuthID = admins[0].ID.String()
+	AuthEmail = admins[0].Email
+	AuthPassword = "password"
+
+	token, err := server.AdminSignIn(AuthEmail, AuthPassword)
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	tokenString := fmt.Sprintf("Bearer %v", token)
+
+	authAdmin, err := shopAdmin.UpdateAdmin(server.DB, admins[0].ID.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	assert.Equal(t, AuthID, authAdmin.ID.String())
+	assert.Equal(t, shop.ID, authAdmin.ShopID)
+
+	samples := []struct {
+		inputJSON    string
+		statusCode   int
+		tokenGiven   string
+		name         string
+		shopID       string
+		errorMessage string
+	}{
+		{
+			inputJSON:    `{"name": "Cappuccino", "price": 2.90, "price_currency": "GBP"}`,
+			statusCode:   201,
+			name:         "Cappuccino",
+			tokenGiven:   tokenString,
+			shopID:       shop.ID.String(),
+			errorMessage: "",
+		},
+		// More cases to cover
+	}
+
+	for _, v := range samples {
+		req, err := http.NewRequest("POST", "/shops", bytes.NewBufferString(v.inputJSON))
+		if err != nil {
+			t.Errorf("this is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"shop_id": v.shopID})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.CreateProduct)
+		req.Header.Set("Authorization", v.tokenGiven)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			log.Fatalf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+		if v.statusCode == 201 {
+			shopResponseMap := responseMap["sold_by"].(map[string]interface{})
+			assert.Equal(t, responseMap["name"], v.name)
+			assert.Equal(t, shopResponseMap["ID"], v.shopID)
+		}
+
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
 
 func TestGetProducts(t *testing.T) {

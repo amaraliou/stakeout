@@ -44,11 +44,7 @@ func (server *Server) CreateProduct(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	err = product.Validate("create")
-	if err != nil {
-		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
-		return
-	}
+	// Check if the current admin is the same admin as the shop, if not, they are unauthorized
 
 	shopUUID, err := uuid.FromString(shopID)
 	if err != nil {
@@ -57,6 +53,12 @@ func (server *Server) CreateProduct(writer http.ResponseWriter, request *http.Re
 	}
 
 	product.ShopID = shopUUID
+
+	err = product.Validate("create")
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
 
 	productCreated, err := product.CreateProduct(server.DB)
 	if err != nil {
