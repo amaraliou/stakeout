@@ -111,6 +111,17 @@ func TestCreateProduct(t *testing.T) {
 		log.Fatal(err)
 	}
 
+	student, err := seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	studentToken, err := server.SignIn(student.Email, "password")
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
+
 	err = server.DB.Model(&models.Admin{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
 	if err != nil {
 		log.Fatal(err)
@@ -158,6 +169,51 @@ func TestCreateProduct(t *testing.T) {
 			tokenGiven:   tokenString,
 			shopID:       shop.ID.String(),
 			errorMessage: "",
+		},
+		{
+			inputJSON:    `{"price": 2.90, "price_currency": "GBP"}`,
+			statusCode:   422,
+			tokenGiven:   tokenString,
+			shopID:       shop.ID.String(),
+			errorMessage: "Required product name",
+		},
+		{
+			inputJSON:    `{"name": "Cappuccino", "price_currency": "GBP"}`,
+			statusCode:   422,
+			tokenGiven:   tokenString,
+			shopID:       shop.ID.String(),
+			errorMessage: "Required product price",
+		},
+		{
+			inputJSON:    `{"name": "Cappuccino", "price": 2.90, "price_currency": "GBP"}`,
+			statusCode:   422,
+			tokenGiven:   tokenString,
+			shopID:       "00000000-0000-0000-0000-000000000000",
+			errorMessage: "Required shop",
+		},
+		{
+			inputJSON:    `{"name": "Cappuccino", "price": 2.90, "price_currency": "GBP"}`,
+			statusCode:   401,
+			name:         "Cappuccino",
+			tokenGiven:   studentTokenString,
+			shopID:       shop.ID.String(),
+			errorMessage: "Unauthorized: This is not an admin token",
+		},
+		{
+			inputJSON:    `{"name": "Cappuccino", "price": 2.90, "price_currency": "GBP"}`,
+			statusCode:   422,
+			name:         "Cappuccino",
+			tokenGiven:   "hdbjksjass",
+			shopID:       shop.ID.String(),
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			inputJSON:    `{"name": "Cappuccino", "price": 2.90, "price_currency": "GBP"}`,
+			statusCode:   422,
+			name:         "Cappuccino",
+			tokenGiven:   tokenString,
+			shopID:       "jkjsanfjksakjkd",
+			errorMessage: "uuid: incorrect UUID length: jkjsanfjksakjkd",
 		},
 		// More cases to cover
 	}
