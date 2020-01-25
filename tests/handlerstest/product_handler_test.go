@@ -127,6 +127,11 @@ func TestCreateProduct(t *testing.T) {
 		log.Fatal(err)
 	}
 
+	err = server.DB.Model(&models.Product{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	admins, err := seedAdmins()
 	if err != nil {
 		log.Fatal(err)
@@ -250,7 +255,34 @@ func TestCreateProduct(t *testing.T) {
 }
 
 func TestGetProducts(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	products, err := seedProducts()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req, err := http.NewRequest("GET", "/products", nil)
+	if err != nil {
+		t.Errorf("this is the error: %v\n", err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.GetProducts)
+	handler.ServeHTTP(rr, req)
+
+	var receivedProducts []models.Product
+	err = json.Unmarshal([]byte(rr.Body.String()), &receivedProducts)
+	if err != nil {
+		log.Fatalf("Cannot convert to json: %v\n", err)
+	}
+
+	assert.Equal(t, rr.Code, http.StatusOK)
+	assert.Equal(t, len(products), 2)
 }
 
 func TestGetProductsByShop(t *testing.T) {
@@ -258,7 +290,67 @@ func TestGetProductsByShop(t *testing.T) {
 }
 
 func TestGetProductByID(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	product, err := seedOneProduct()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	samples := []struct {
+		id           string
+		statusCode   int
+		name         string
+		errorMessage string
+	}{
+		{
+			id:         product.ID.String(),
+			statusCode: 200,
+			name:       "Cappuccino",
+		},
+		{
+			id:           "jdsfksjdfj",
+			statusCode:   500,
+			errorMessage: "pq: invalid input syntax for type uuid: \"jdsfksjdfj\"",
+		},
+		{
+			id:           "1b56f03e-823c-4861-bee3-223c82e91c1f",
+			statusCode:   500,
+			errorMessage: "Product not found",
+		},
+	}
+
+	for _, v := range samples {
+
+		req, err := http.NewRequest("GET", "/products", nil)
+		if err != nil {
+			t.Errorf("this is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"id": v.id})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.GetProductByID)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			log.Fatalf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+		if v.statusCode == 200 {
+			assert.Equal(t, responseMap["ID"], v.id)
+		}
+
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
 
 func TestUpdateProduct(t *testing.T) {
