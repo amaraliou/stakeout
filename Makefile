@@ -14,6 +14,7 @@ coverfile: test_handlers test_models
 	@gocovmerge ./handlers.out ./models.out > coverage.out
 
 test_junit:
+	@rm -rf test-results
 	@mkdir test-results
 	@gotestsum --format standard-verbose --junitfile ./test-results/handlers-tests.xml ./tests/handlerstest/...
 	@gotestsum --format standard-verbose --junitfile ./test-results/models-tests.xml ./tests/modelstest/...
