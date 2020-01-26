@@ -286,7 +286,75 @@ func TestGetProducts(t *testing.T) {
 }
 
 func TestGetProductsByShop(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = server.DB.Model(&models.Product{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	products, err := seedProducts()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shopID := products[0].ShopID
+
+	samples := []struct {
+		shopID       string
+		statusCode   int
+		length       int
+		errorMessage string
+	}{
+		{
+			shopID:     shopID.String(),
+			statusCode: 200,
+			length:     2,
+		},
+		{
+			shopID:       "jkshdksjhjfdk",
+			statusCode:   500,
+			errorMessage: "pq: invalid input syntax for type uuid: \"jkshdksjhjfdk\"",
+		},
+		{
+			shopID:       "1b56f03e-823c-4861-bee3-223c82e91c1f",
+			statusCode:   500,
+			errorMessage: "Shop not found",
+		},
+	}
+
+	for _, v := range samples {
+
+		req, err := http.NewRequest("GET", "/shops", nil)
+		if err != nil {
+			t.Errorf("this is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"shop_id": v.shopID})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.GetProductsByShop)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			log.Fatalf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+		if v.statusCode == 200 {
+			products := responseMap["products"].([]interface{})
+			assert.Equal(t, len(products), v.length)
+		}
+
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
 
 func TestGetProductByID(t *testing.T) {

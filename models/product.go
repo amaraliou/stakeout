@@ -63,7 +63,13 @@ func (product *Product) FindAllProducts(db *gorm.DB) (*[]Product, error) {
 func (product *Product) FindAllProductsByShop(db *gorm.DB, shopID string) (*[]Product, error) {
 
 	products := []Product{}
-	err := db.Debug().Model(&Product{}).Where("shop_id = ?", shopID).Find(&products).Error
+	shop := Shop{}
+	_, err := shop.FindShopByID(db, shopID)
+	if err != nil {
+		return &[]Product{}, err
+	}
+
+	err = db.Debug().Model(&Product{}).Where("shop_id = ?", shopID).Find(&products).Error
 	if err != nil {
 		return &[]Product{}, err
 	}

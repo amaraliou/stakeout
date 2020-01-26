@@ -108,7 +108,7 @@ func (server *Server) GetProductsByShop(writer http.ResponseWriter, request *htt
 		return
 	}
 
-	responses.JSON(writer, http.StatusOK, products)
+	responses.JSON(writer, http.StatusOK, map[string]interface{}{"products": products})
 }
 
 // UpdateProduct -> handles PUT /api/v1/shops/<shop_id:uuid>/products/<id:uuid>
