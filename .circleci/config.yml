@@ -28,7 +28,6 @@ jobs:
     steps:
       - checkout
       - run: sudo apt install postgresql-client
-
       - run:
           name: Wait for db
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
@@ -66,7 +65,27 @@ jobs:
           #command: make test_handlers
 
       - run:
-          name: Test and Coverage
+          name: Unit Tests
+          environment:
+            DB_USER: postgres
+            DB_PASS: postgres
+            DB_NAME: apetitoso_test
+            DB_HOST: localhost
+            DB_PORT: 5432
+            DB_TYPE: postgres
+          command: |
+            go get gotest.tools/gotestsum
+            mkdir -p ~/test-results
+            gotestsum --format standard-verbose --junitfile ~/test-results/handlers-tests.xml ./tests/handlerstest/...
+            gotestsum --format standard-verbose --junitfile ~/test-results/models-tests.xml ./tests/modelstest/...
+          when: always
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results
+          
+      - run:
+          name: Coverage
           environment:
             DB_USER: postgres
             DB_PASS: postgres
