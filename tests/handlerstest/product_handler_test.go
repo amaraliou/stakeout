@@ -422,7 +422,151 @@ func TestGetProductByID(t *testing.T) {
 }
 
 func TestUpdateProduct(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	var AuthEmail, AuthPassword, AuthID string
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	student, err := seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	studentToken, err := server.SignIn(student.Email, "password")
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
+
+	err = server.DB.Model(&models.Admin{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = server.DB.Model(&models.Product{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	products, err := seedProducts()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admins, err := seedAdmins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shopAdmin := models.Admin{
+		ShopID: products[0].ShopID,
+	}
+
+	AuthID = admins[0].ID.String()
+	AuthEmail = admins[0].Email
+	AuthPassword = "password"
+
+	token, err := server.AdminSignIn(AuthEmail, AuthPassword)
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	tokenString := fmt.Sprintf("Bearer %v", token)
+
+	authAdmin, err := shopAdmin.UpdateAdmin(server.DB, admins[0].ID.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	assert.Equal(t, AuthID, authAdmin.ID.String())
+	assert.Equal(t, products[0].ShopID, authAdmin.ShopID)
+	fmt.Print(studentTokenString, tokenString)
+
+	samples := []struct {
+		shopID       string
+		productID    string
+		updateJSON   string
+		tokenGiven   string
+		statusCode   int
+		updateName   string
+		updatePrice  float64
+		errorMessage string
+	}{
+		{
+			updateJSON:  `{"name":"Spicy Pumpkin Cappuccino", "price": 3.50}`,
+			shopID:      products[0].ShopID.String(),
+			productID:   products[0].ID.String(),
+			tokenGiven:  tokenString,
+			statusCode:  200,
+			updateName:  "Spicy Pumpkin Cappuccino",
+			updatePrice: 3.50,
+		},
+		{
+			updateJSON:   `{"name":"Spicy Pumpkin Cappuccino", "price": 3.50}`,
+			shopID:       products[0].ShopID.String(),
+			productID:    products[0].ID.String(),
+			tokenGiven:   studentTokenString,
+			statusCode:   401,
+			errorMessage: "Unauthorized: This is not an admin token",
+		},
+		{
+			updateJSON:   `{"name":"Spicy Pumpkin Cappuccino", "price": 3.50}`,
+			shopID:       products[0].ShopID.String(),
+			productID:    products[0].ID.String(),
+			tokenGiven:   "jdlkfksajfjls",
+			statusCode:   422,
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			updateJSON:   `{"name":"Spicy Pumpkin Cappuccino", "price": 3.50}`,
+			shopID:       products[0].ShopID.String(),
+			productID:    "1b56f03e-823c-4861-bee3-223c82e91c1f",
+			tokenGiven:   tokenString,
+			statusCode:   500,
+			errorMessage: "Product not found",
+		},
+		{
+			updateJSON:   `{"name":"Spicy Pumpkin Cappuccino", "price": 3.50}`,
+			shopID:       "1b56f03e-823c-4861-bee3-223c82e91c1f",
+			productID:    products[0].ID.String(),
+			tokenGiven:   tokenString,
+			statusCode:   401,
+			errorMessage: "Unauthorized: This product does not belong to the given shop",
+		},
+	}
+
+	for _, v := range samples {
+
+		req, err := http.NewRequest("PUT", "/shops", bytes.NewBufferString(v.updateJSON))
+		if err != nil {
+			t.Errorf("This is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{
+			"product_id": v.productID,
+			"shop_id":    v.shopID,
+		})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.UpdateProduct)
+		req.Header.Set("Authorization", v.tokenGiven)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			t.Errorf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+		if v.statusCode == 200 {
+			assert.Equal(t, responseMap["name"], v.updateName)
+		}
+
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
 
 func TestDeleteProduct(t *testing.T) {
