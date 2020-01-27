@@ -1,1 +1,1 @@
-# Apetitoso - A secret project
+# Stakeout - A secret project
