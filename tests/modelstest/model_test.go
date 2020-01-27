@@ -2,14 +2,13 @@ package modelstest
 
 import (
 	"fmt"
+	"github.com/amaraliou/stakeout/handlers"
+	"github.com/amaraliou/stakeout/models"
+	"github.com/jinzhu/gorm"
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"testing"
-
-	"github.com/amaraliou/apetitoso/handlers"
-	"github.com/amaraliou/apetitoso/models"
-	"github.com/jinzhu/gorm"
-	"github.com/joho/godotenv"
 )
 
 var server = handlers.Server{}

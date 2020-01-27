@@ -1,11 +1,10 @@
 package modelstest
 
 import (
+	"github.com/amaraliou/stakeout/models"
+	"gopkg.in/go-playground/assert.v1"
 	"log"
 	"testing"
-
-	"github.com/amaraliou/apetitoso/models"
-	"gopkg.in/go-playground/assert.v1"
 )
 
 func TestFindAllProducts(t *testing.T) {

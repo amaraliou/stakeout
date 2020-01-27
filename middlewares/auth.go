@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/amaraliou/apetitoso/auth"
-	"github.com/amaraliou/apetitoso/responses"
+	"github.com/amaraliou/stakeout/responses"
+	"github.com/amaraliou/stakeout/auth"
 )
 
 // SetMiddlewareAuthentication ...

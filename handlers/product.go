@@ -7,9 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/amaraliou/apetitoso/auth"
-	"github.com/amaraliou/apetitoso/models"
-	"github.com/amaraliou/apetitoso/responses"
+	"github.com/amaraliou/stakeout/models"
+	"github.com/amaraliou/stakeout/responses"
+	"github.com/amaraliou/stakeout/auth"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 )

@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/amaraliou/apetitoso/models"
+	"github.com/amaraliou/stakeout/models"
 	"github.com/lib/pq"
 	"gopkg.in/go-playground/assert.v1"
 )

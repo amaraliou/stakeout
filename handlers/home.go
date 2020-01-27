@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/amaraliou/apetitoso/responses"
+	"github.com/amaraliou/stakeout/responses"
 )
 
 // Home -> handles GET /api/v1/

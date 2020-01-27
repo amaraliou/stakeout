@@ -1,6 +1,6 @@
 package handlers
 
-import "github.com/amaraliou/apetitoso/middlewares"
+import "github.com/amaraliou/stakeout/middlewares"
 
 func (server *Server) initializeRoutes() {
 

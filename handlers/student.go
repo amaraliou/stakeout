@@ -9,9 +9,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/amaraliou/apetitoso/auth"
-	"github.com/amaraliou/apetitoso/models"
-	"github.com/amaraliou/apetitoso/responses"
+	"github.com/amaraliou/stakeout/models"
+	"github.com/amaraliou/stakeout/responses"
+	"github.com/amaraliou/stakeout/auth"
 )
 
 // CreateStudent -> handles POST /api/v1/student/
