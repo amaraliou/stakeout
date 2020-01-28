@@ -16,6 +16,7 @@ var studentInstance = models.Student{}
 var adminInstance = models.Admin{}
 var shopInstance = models.Shop{}
 var productInstance = models.Product{}
+var orderInstance = models.Order{}
 
 func TestMain(m *testing.M) {
 	var err error
@@ -41,12 +42,12 @@ func Database() {
 }
 
 func refreshEverything() error {
-	err := server.DB.DropTableIfExists(&models.Student{}, &models.Admin{}, &models.Product{}, &models.Shop{}).Error
+	err := server.DB.DropTableIfExists(&models.Student{}, &models.Admin{}, &models.Product{}, &models.Shop{}, &models.Order{}).Error
 	if err != nil {
 		return err
 	}
 
-	err = server.DB.AutoMigrate(&models.Student{}, &models.Shop{}, &models.Admin{}, &models.Product{}).Error
+	err = server.DB.AutoMigrate(&models.Student{}, &models.Shop{}, &models.Admin{}, &models.Product{}, &models.Order{}).Error
 	if err != nil {
 		return err
 	}
@@ -100,6 +101,20 @@ func refreshProductTable() error {
 	}
 
 	err = server.DB.AutoMigrate(&models.Product{}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func refreshOrderTable() error {
+	err := server.DB.DropTableIfExists(&models.Order{}).Error
+	if err != nil {
+		return err
+	}
+
+	err = server.DB.AutoMigrate(&models.Order{}).Error
 	if err != nil {
 		return err
 	}
@@ -374,4 +389,44 @@ func seedProducts() ([]models.Product, error) {
 	}
 
 	return products, nil
+}
+
+func seedOneOrder() (models.Order, error) {
+
+	refreshEverything()
+	var total float32
+
+	student, err := seedOneStudent()
+	if err != nil {
+		return models.Order{}, err
+	}
+
+	products, err := seedProducts()
+	if err != nil {
+		return models.Order{}, err
+	}
+
+	total = 0.0
+
+	for _, product := range products {
+		total = total + product.Price
+	}
+
+	order := models.Order{
+		UserID:     student.ID,
+		ShopID:     products[0].ShopID,
+		OrderItems: products,
+		OrderTotal: total,
+	}
+
+	err = server.DB.Model(&models.Order{}).Create(&order).Error
+	if err != nil {
+		return models.Order{}, err
+	}
+
+	return order, nil
+}
+
+func seedOrders() ([]models.Order, error) {
+	return []models.Order{}, nil
 }
