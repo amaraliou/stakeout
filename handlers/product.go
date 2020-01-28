@@ -7,9 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/amaraliou/stakeout/auth"
 	"github.com/amaraliou/stakeout/models"
 	"github.com/amaraliou/stakeout/responses"
-	"github.com/amaraliou/stakeout/auth"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 )
@@ -178,23 +178,6 @@ func (server *Server) DeleteProduct(writer http.ResponseWriter, request *http.Re
 	productID := vars["product_id"]
 	product := models.Product{}
 	productFinder := models.Product{}
-
-	body, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
-	}
-
-	err = json.Unmarshal(body, &product)
-	if err != nil {
-		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
-		return
-	}
-
-	err = product.Validate("")
-	if err != nil {
-		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
-		return
-	}
 
 	isAdmin, err := auth.IsAdminToken(request)
 	if err != nil {

@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/amaraliou/stakeout/models"
+	"github.com/gorilla/mux"
+	"gopkg.in/go-playground/assert.v1"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"github.com/amaraliou/stakeout/models"
-	"github.com/gorilla/mux"
-	"gopkg.in/go-playground/assert.v1"
 )
 
 func refreshProductTable() error {
@@ -480,7 +480,6 @@ func TestUpdateProduct(t *testing.T) {
 
 	assert.Equal(t, AuthID, authAdmin.ID.String())
 	assert.Equal(t, products[0].ShopID, authAdmin.ShopID)
-	fmt.Print(studentTokenString, tokenString)
 
 	samples := []struct {
 		shopID       string
@@ -569,5 +568,133 @@ func TestUpdateProduct(t *testing.T) {
 }
 
 func TestDeleteProduct(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	var AuthEmail, AuthPassword, AuthID string
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	student, err := seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	studentToken, err := server.SignIn(student.Email, "password")
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	studentTokenString := fmt.Sprintf("Bearer %v", studentToken)
+
+	err = server.DB.Model(&models.Admin{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = server.DB.Model(&models.Product{}).AddForeignKey("shop_id", "shops(id)", "CASCADE", "CASCADE").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	products, err := seedProducts()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	admins, err := seedAdmins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shopAdmin := models.Admin{
+		ShopID: products[0].ShopID,
+	}
+
+	AuthID = admins[0].ID.String()
+	AuthEmail = admins[0].Email
+	AuthPassword = "password"
+
+	token, err := server.AdminSignIn(AuthEmail, AuthPassword)
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	tokenString := fmt.Sprintf("Bearer %v", token)
+
+	authAdmin, err := shopAdmin.UpdateAdmin(server.DB, admins[0].ID.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	assert.Equal(t, AuthID, authAdmin.ID.String())
+	assert.Equal(t, products[0].ShopID, authAdmin.ShopID)
+	fmt.Print(studentTokenString, tokenString)
+
+	samples := []struct {
+		productID    string
+		shopID       string
+		tokenGiven   string
+		statusCode   int
+		errorMessage string
+	}{
+		{
+			productID:    products[0].ID.String(),
+			shopID:       "1b56f03e-823c-4861-bee3-223c82e91c1f",
+			tokenGiven:   tokenString,
+			statusCode:   401,
+			errorMessage: "Unauthorized: This product does not belong to the given shop",
+		},
+		{
+			productID:  products[0].ID.String(),
+			shopID:     products[0].ShopID.String(),
+			tokenGiven: tokenString,
+			statusCode: 204,
+		},
+		{
+			productID:    products[0].ID.String(),
+			shopID:       products[0].ShopID.String(),
+			tokenGiven:   studentTokenString,
+			statusCode:   401,
+			errorMessage: "Unauthorized: This is not an admin token",
+		},
+		{
+			productID:    products[0].ID.String(),
+			shopID:       products[0].ShopID.String(),
+			tokenGiven:   "bruh",
+			statusCode:   422,
+			errorMessage: "token contains an invalid number of segments",
+		},
+		{
+			productID:    "1b56f03e-823c-4861-bee3-223c82e91c1f",
+			shopID:       products[0].ShopID.String(),
+			tokenGiven:   tokenString,
+			statusCode:   500,
+			errorMessage: "Product not found",
+		},
+	}
+
+	for _, v := range samples {
+		req, err := http.NewRequest("DELETE", "/shops", nil)
+		if err != nil {
+			t.Errorf("This is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{
+			"product_id": v.productID,
+			"shop_id":    v.shopID,
+		})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.DeleteProduct)
+		req.Header.Set("Authorization", v.tokenGiven)
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, rr.Code, v.statusCode)
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			responseMap := make(map[string]interface{})
+			err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+			if err != nil {
+				t.Errorf("Cannot convert to json: %v", err)
+			}
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
