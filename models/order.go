@@ -37,7 +37,7 @@ type Order struct {
 	OrderedFrom Shop      `json:"ordered_from" gorm:"foreignkey:ShopID"`
 	OrderItems  []Product `json:"ordered_items" gorm:"many2many:order_products;"`
 	OrderTotal  float32   `json:"total_price"`
-	Status      uint8     `json:"status" gorm:"type:tinyint(1)"`
+	Status      uint8     `json:"status"`
 }
 
 // Validate ...

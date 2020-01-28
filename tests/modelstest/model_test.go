@@ -351,7 +351,15 @@ func seedOneProduct() (models.Product, error) {
 
 func seedProducts() ([]models.Product, error) {
 
-	refreshEverything()
+	err := server.DB.DropTableIfExists(&models.Admin{}, &models.Product{}, &models.Shop{}, &models.Order{}).Error
+	if err != nil {
+		return []models.Product{}, err
+	}
+
+	err = server.DB.AutoMigrate(&models.Shop{}, &models.Admin{}, &models.Product{}, &models.Order{}).Error
+	if err != nil {
+		return []models.Product{}, err
+	}
 
 	shop, err := seedOneShop()
 	if err != nil {
