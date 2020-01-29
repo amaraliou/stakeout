@@ -436,5 +436,51 @@ func seedOneOrder() (models.Order, error) {
 }
 
 func seedOrders() ([]models.Order, error) {
-	return []models.Order{}, nil
+
+	refreshEverything()
+	var total1 float32
+	var total2 float32
+
+	student, err := seedOneStudent()
+	if err != nil {
+		return []models.Order{}, err
+	}
+
+	products, err := seedProducts()
+	if err != nil {
+		return []models.Order{}, err
+	}
+
+	total1 = products[0].Price
+	total2 = 0.0
+
+	for _, product := range products {
+		total2 = total2 + product.Price
+	}
+
+	orders := []models.Order{
+		models.Order{
+			UserID: student.ID,
+			ShopID: products[0].ShopID,
+			OrderItems: []models.Product{
+				products[0],
+			},
+			OrderTotal: total1,
+		},
+		models.Order{
+			UserID:     student.ID,
+			ShopID:     products[0].ShopID,
+			OrderItems: products,
+			OrderTotal: total2,
+		},
+	}
+
+	for _, order := range orders {
+		err = server.DB.Model(&models.Order{}).Create(&order).Error
+		if err != nil {
+			return []models.Order{}, err
+		}
+	}
+
+	return orders, nil
 }
