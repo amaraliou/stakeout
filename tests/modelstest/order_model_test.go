@@ -160,5 +160,22 @@ func TestUpdateOrder(t *testing.T) {
 }
 
 func TestDeleteOrder(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	order, err := seedOneOrder()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	isDeleted, err := orderInstance.DeleteOrder(server.DB, order.ID.String())
+	if err != nil {
+		t.Errorf("This is the error deleting the order: %v\n", err)
+		return
+	}
+
+	assert.Equal(t, isDeleted, int64(1))
 }
