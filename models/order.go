@@ -176,11 +176,11 @@ func (order *Order) UpdateOrder(db *gorm.DB, id string) (*Order, error) {
 
 	err := db.Debug().Model(Order{}).Updates(&order).Error
 	if err != nil {
-		return &Order{}, nil
+		return &Order{}, err
 	}
 	// More to cover
 
-	return order, err
+	return order, nil
 }
 
 // DeleteOrder ...

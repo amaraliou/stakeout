@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/amaraliou/stakeout/models"
+	"github.com/lib/pq"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -178,4 +179,53 @@ func TestDeleteOrder(t *testing.T) {
 	}
 
 	assert.Equal(t, isDeleted, int64(1))
+}
+
+func TestNonExistentOrderTable(t *testing.T) {
+
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = server.DB.DropTableIfExists(&models.Order{}).Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	student, err := seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shop, err := seedOneShop()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fakeOrder := models.Order{
+		UserID: student.ID,
+		ShopID: shop.ID,
+	}
+
+	_, err = orderInstance.FindAllOrders(server.DB)
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"orders\" does not exist")
+
+	_, err = orderInstance.FindAllOrdersByStudent(server.DB, student.ID.String())
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"orders\" does not exist")
+
+	_, err = orderInstance.FindAllOrdersByShop(server.DB, shop.ID.String())
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"orders\" does not exist")
+
+	_, err = orderInstance.FindOrderByID(server.DB, shop.ID.String())
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"orders\" does not exist")
+
+	_, err = fakeOrder.CreateOrder(server.DB)
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"orders\" does not exist")
+
+	_, err = fakeOrder.UpdateOrder(server.DB, shop.ID.String())
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"orders\" does not exist")
+
+	_, err = fakeOrder.DeleteOrder(server.DB, shop.ID.String())
+	assert.Equal(t, err.(*pq.Error).Message, "relation \"orders\" does not exist")
 }
