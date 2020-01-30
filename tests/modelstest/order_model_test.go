@@ -4,6 +4,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/amaraliou/stakeout/models"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -93,4 +94,49 @@ func TestFindOrderByID(t *testing.T) {
 
 	assert.Equal(t, foundOrder.ID, order.ID)
 	assert.Equal(t, foundOrder.ShopID, order.ShopID)
+}
+
+func TestCreateOrder(t *testing.T) {
+
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	products, err := seedProducts()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	student, err := seedOneStudent()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	newOrder := models.Order{
+		UserID: student.ID,
+		ShopID: products[0].ShopID,
+		OrderItems: []models.Product{
+			products[0],
+		},
+		OrderTotal: products[0].Price,
+		Status:     0,
+	}
+
+	savedOrder, err := newOrder.CreateOrder(server.DB)
+	if err != nil {
+		t.Errorf("This is the error creating the order: %v\n", err)
+		return
+	}
+
+	assert.Equal(t, newOrder.ShopID, savedOrder.ShopID)
+	assert.Equal(t, newOrder.OrderTotal, savedOrder.OrderTotal)
+}
+
+func TestUpdateOrder(t *testing.T) {
+	assert.Equal(t, 1, 1)
+}
+
+func TestDeleteOrder(t *testing.T) {
+	assert.Equal(t, 1, 1)
 }

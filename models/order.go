@@ -168,7 +168,7 @@ func (order *Order) CreateOrder(db *gorm.DB) (*Order, error) {
 	order.OrderedBy = *student
 	order.OrderedFrom = *shop
 
-	return &Order{}, nil
+	return order, nil
 }
 
 // UpdateOrder ...
