@@ -134,7 +134,29 @@ func TestCreateOrder(t *testing.T) {
 }
 
 func TestUpdateOrder(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	order, err := seedOneOrder()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	orderUpdate := models.Order{
+		Status: 2,
+	}
+
+	updatedOrder, err := orderUpdate.UpdateOrder(server.DB, order.ID.String())
+	if err != nil {
+		t.Errorf("This is the error updating the order: %v\n", err)
+		return
+	}
+
+	assert.Equal(t, updatedOrder.ID, orderUpdate.ID)
+	assert.NotEqual(t, order.Status, updatedOrder.Status)
 }
 
 func TestDeleteOrder(t *testing.T) {
