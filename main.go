@@ -1,6 +1,6 @@
 package main
 
-import "github.com/amaraliou/apetitoso/server"
+import "github.com/amaraliou/stakeout/server"
 
 func main() {
 	server.Run()

@@ -3,7 +3,7 @@ package utils
 import (
 	"log"
 
-	"github.com/amaraliou/apetitoso/models"
+	"github.com/amaraliou/stakeout/models"
 	"github.com/jinzhu/gorm"
 )
 
