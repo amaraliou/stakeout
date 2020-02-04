@@ -84,6 +84,14 @@ func (server *Server) CreateOrder(writer http.ResponseWriter, request *http.Requ
 // GetAllOrders -> handles GET /api/v1/orders/
 func (server *Server) GetAllOrders(writer http.ResponseWriter, request *http.Request) {
 
+	order := models.Order{}
+	orders, err := order.FindAllOrders(server.DB)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, orders)
 }
 
 // GetAllOrdersByStudent -> handles GET /api/v1/students/<student_id:uuid>/orders/
