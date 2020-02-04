@@ -161,6 +161,15 @@ func (server *Server) GetAllOrdersByShop(writer http.ResponseWriter, request *ht
 // GetOrderByID -> handles GET /api/v1/orders/<id:uuid>
 func (server *Server) GetOrderByID(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	order := models.Order{}
+	orderRetrieved, err := order.FindOrderByID(server.DB, vars["id"])
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, orderRetrieved)
 }
 
 // UpdateOrder -> handles PUT /api/v1/shops/<shop_id:uuid>/orders/<order_id:uuid>
