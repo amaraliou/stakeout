@@ -97,11 +97,65 @@ func (server *Server) GetAllOrders(writer http.ResponseWriter, request *http.Req
 // GetAllOrdersByStudent -> handles GET /api/v1/students/<student_id:uuid>/orders/
 func (server *Server) GetAllOrdersByStudent(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	studentID := vars["student_id"]
+	student := models.Student{}
+	order := models.Order{}
+
+	tokenID, err := auth.ExtractTokenID(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	if tokenID != studentID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		return
+	}
+
+	_, err = student.FindStudentByID(server.DB, studentID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	orders, err := order.FindAllOrdersByStudent(server.DB, studentID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, orders)
 }
 
 // GetAllOrdersByShop -> handles GET /api/v1/shops/<shop_id:uuid>/orders/
 func (server *Server) GetAllOrdersByShop(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	shopID := vars["shop_id"]
+	shop := models.Shop{}
+	order := models.Order{}
+
+	// Verify that it's admin, student or owner (soon to be introduced)
+	err := auth.TokenValid(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: Admin, Student or Owner not authenticated"))
+		return
+	}
+
+	_, err = shop.FindShopByID(server.DB, shopID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	orders, err := order.FindAllOrdersByShop(server.DB, shopID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, orders)
 }
 
 // GetOrderByID -> handles GET /api/v1/orders/<id:uuid>
