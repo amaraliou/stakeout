@@ -239,4 +239,47 @@ func (server *Server) UpdateOrder(writer http.ResponseWriter, request *http.Requ
 // DeleteOrder -> handles DELETE /api/v1/shops/<shop_id:uuid>/orders/<order_id:uuid>
 func (server *Server) DeleteOrder(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	shopID := vars["shop_id"]
+	orderID := vars["order_id"]
+	shop := models.Shop{}
+	order := models.Order{}
+	orderFinder := models.Order{}
+
+	isAdmin, err := auth.IsAdminToken(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	if !isAdmin {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This is not an admin token"))
+		return
+	}
+
+	currentOrder, err := orderFinder.FindOrderByID(server.DB, orderID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	if currentOrder.ShopID.String() != shopID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This order does not belong to the given shop"))
+		return
+	}
+
+	_, err = shop.FindShopByID(server.DB, currentOrder.ShopID.String())
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	_, err = order.DeleteOrder(server.DB, orderID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	writer.Header().Set("Entity", fmt.Sprintf("%s", orderID))
+	responses.JSON(writer, http.StatusNoContent, "")
 }
