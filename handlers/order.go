@@ -175,6 +175,65 @@ func (server *Server) GetOrderByID(writer http.ResponseWriter, request *http.Req
 // UpdateOrder -> handles PUT /api/v1/shops/<shop_id:uuid>/orders/<order_id:uuid>
 func (server *Server) UpdateOrder(writer http.ResponseWriter, request *http.Request) {
 
+	vars := mux.Vars(request)
+	shopID := vars["shop_id"]
+	orderID := vars["order_id"]
+	shop := models.Shop{}
+	order := models.Order{}
+	orderFinder := models.Order{}
+
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+	}
+
+	err = json.Unmarshal(body, &order)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	err = order.Validate("updatestatus")
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	isAdmin, err := auth.IsAdminToken(request)
+	if err != nil {
+		responses.ERROR(writer, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	if !isAdmin {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This is not an admin token"))
+		return
+	}
+
+	currentOrder, err := orderFinder.FindOrderByID(server.DB, orderID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	if currentOrder.ShopID.String() != shopID {
+		responses.ERROR(writer, http.StatusUnauthorized, errors.New("Unauthorized: This order does not belong to the given shop"))
+		return
+	}
+
+	_, err = shop.FindShopByID(server.DB, currentOrder.ShopID.String())
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	updatedOrder, err := order.UpdateOrder(server.DB, orderID)
+	if err != nil {
+		responses.ERROR(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(writer, http.StatusOK, updatedOrder)
 }
 
 // DeleteOrder -> handles DELETE /api/v1/shops/<shop_id:uuid>/orders/<order_id:uuid>

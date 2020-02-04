@@ -178,6 +178,21 @@ func (order *Order) UpdateOrder(db *gorm.DB, id string) (*Order, error) {
 	if err != nil {
 		return &Order{}, err
 	}
+
+	/* student := &Student{}
+	err = db.Debug().Model(Student{}).Where("id = ?", order.UserID.String()).Take(&student).Error
+	if err != nil {
+		return &Order{}, errors.New("Student doesn't exist, can't create order")
+	}
+
+	shop := &Shop{}
+	err = db.Debug().Model(Shop{}).Where("id = ?", order.ShopID.String()).Take(&shop).Error
+	if err != nil {
+		return &Order{}, errors.New("Shop doesn't exist, can't create order")
+	}
+
+	order.OrderedBy = *student
+	order.OrderedFrom = *shop */
 	// More to cover
 
 	return order, nil
