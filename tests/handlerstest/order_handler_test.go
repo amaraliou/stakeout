@@ -207,6 +207,20 @@ func TestCreateOrder(t *testing.T) {
 			tokenGiven:   tokenString,
 			errorMessage: "Required shop",
 		},
+		{
+			studentID:    AuthID,
+			createJSON:   fmt.Sprintf(`{"shop_id": "%s"}`, products[0].ShopID.String()),
+			statusCode:   422,
+			tokenGiven:   tokenString,
+			errorMessage: "Required order items",
+		},
+		{
+			studentID:    AuthID,
+			createJSON:   fmt.Sprintf(`{"shop_id": "33597717-e0cc-4d9e-bcab-65d48ecb2523", "ordered_items": [%s]}`, string(orderProduct)),
+			statusCode:   500,
+			tokenGiven:   tokenString,
+			errorMessage: "Shop not found",
+		},
 	}
 
 	for _, v := range samples {
