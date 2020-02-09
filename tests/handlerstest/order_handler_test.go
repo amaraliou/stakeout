@@ -1,6 +1,7 @@
 package handlerstest
 
 import (
+	"log"
 	"testing"
 
 	"github.com/amaraliou/stakeout/models"
@@ -108,6 +109,13 @@ func seedOrders() ([]models.Order, error) {
 }
 
 func TestCreateOrder(t *testing.T) {
+
+	// var AuthEmail, AuthPassword, AuthID string
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	assert.Equal(t, 1, 1)
 }
 

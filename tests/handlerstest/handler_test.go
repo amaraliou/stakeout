@@ -40,12 +40,12 @@ func Database() {
 }
 
 func refreshEverything() error {
-	err := server.DB.DropTableIfExists(&models.Student{}, &models.Admin{}, &models.Product{}, &models.Shop{}).Error
+	err := server.DB.DropTableIfExists(&models.Student{}, &models.Admin{}, &models.Product{}, &models.Shop{}, &models.Order{}).Error
 	if err != nil {
 		return err
 	}
 
-	err = server.DB.AutoMigrate(&models.Student{}, &models.Shop{}, &models.Admin{}, &models.Product{}).Error
+	err = server.DB.AutoMigrate(&models.Student{}, &models.Shop{}, &models.Admin{}, &models.Product{}, &models.Order{}).Error
 	if err != nil {
 		return err
 	}
