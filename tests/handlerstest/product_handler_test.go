@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/amaraliou/stakeout/models"
-	"github.com/gorilla/mux"
-	"gopkg.in/go-playground/assert.v1"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/amaraliou/stakeout/models"
+	"github.com/gorilla/mux"
+	"gopkg.in/go-playground/assert.v1"
 )
 
 func refreshProductTable() error {
@@ -57,7 +58,15 @@ func seedOneProduct() (models.Product, error) {
 
 func seedProducts() ([]models.Product, error) {
 
-	refreshEverything()
+	err := server.DB.DropTableIfExists(&models.Admin{}, &models.Product{}, &models.Shop{}, &models.Order{}).Error
+	if err != nil {
+		return []models.Product{}, err
+	}
+
+	err = server.DB.AutoMigrate(&models.Shop{}, &models.Admin{}, &models.Product{}, &models.Order{}).Error
+	if err != nil {
+		return []models.Product{}, err
+	}
 
 	shop, err := seedOneShop()
 	if err != nil {
@@ -95,6 +104,7 @@ func seedProducts() ([]models.Product, error) {
 	}
 
 	return products, nil
+
 }
 
 func TestCreateProduct(t *testing.T) {
