@@ -1,1 +1,1 @@
-# Stakeout - A secret project
+# Stakeout
