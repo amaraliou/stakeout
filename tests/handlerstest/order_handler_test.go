@@ -255,7 +255,44 @@ func TestCreateOrder(t *testing.T) {
 }
 
 func TestGetOrders(t *testing.T) {
-	assert.Equal(t, 1, 1)
+
+	err := refreshEverything()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	orders, err := seedOrders()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req, err := http.NewRequest("GET", "/orders", nil)
+	if err != nil {
+		t.Errorf("this is the error: %v\n", err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.GetAllOrders)
+	handler.ServeHTTP(rr, req)
+
+	var receivedOrders []models.Order
+	err = json.Unmarshal([]byte(rr.Body.String()), &receivedOrders)
+	if err != nil {
+		log.Fatalf("Cannot convert to json: %v\n", err)
+	}
+
+	assert.Equal(t, rr.Code, http.StatusOK)
+	assert.Equal(t, len(orders), len(receivedOrders))
+
+	err = server.DB.DropTableIfExists(&models.Order{}).Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rrError := httptest.NewRecorder()
+	handler.ServeHTTP(rrError, req)
+
+	assert.Equal(t, rrError.Code, http.StatusInternalServerError)
 }
 
 func TestGetOrdersByShop(t *testing.T) {

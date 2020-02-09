@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/amaraliou/stakeout/models"
-	"github.com/gorilla/mux"
-	"gopkg.in/go-playground/assert.v1"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/amaraliou/stakeout/models"
+	"github.com/gorilla/mux"
+	"gopkg.in/go-playground/assert.v1"
 )
 
 func refreshShopTable() error {
