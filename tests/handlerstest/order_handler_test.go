@@ -1,10 +1,16 @@
 package handlerstest
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/amaraliou/stakeout/models"
+	"github.com/gorilla/mux"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -110,13 +116,89 @@ func seedOrders() ([]models.Order, error) {
 
 func TestCreateOrder(t *testing.T) {
 
-	// var AuthEmail, AuthPassword, AuthID string
+	var AuthEmail, AuthPassword, AuthID string
 	err := refreshEverything()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	assert.Equal(t, 1, 1)
+	students, err := seedStudents()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	products, err := seedProducts()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	authStudent := students[0]
+	AuthID = authStudent.ID.String()
+	AuthEmail = authStudent.Email
+	AuthPassword = "password"
+	unauthStudent := students[1]
+
+	token, err := server.SignIn(AuthEmail, AuthPassword)
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	tokenString := fmt.Sprintf("Bearer %v", token)
+
+	unauthToken, err := server.SignIn(unauthStudent.Email, "password")
+	if err != nil {
+		log.Fatalf("cannot login: %v\n", err)
+	}
+	unauthTokenString := fmt.Sprintf("Bearer %v", unauthToken)
+	fmt.Print(unauthTokenString)
+
+	samples := []struct {
+		studentID     string
+		createJSON    string
+		statusCode    int
+		tokenGiven    string
+		orderedByName string
+		orderedFrom   string
+		errorMessage  string
+	}{
+		{
+			studentID:     AuthID,
+			createJSON:    fmt.Sprintf(`{"shop_id": "%s"}`, products[0].ShopID.String()),
+			statusCode:    201,
+			tokenGiven:    tokenString,
+			orderedByName: "Donald",
+		},
+		// Test shows that an order with an empty list of products will pass through, this shouldn't happen.
+	}
+
+	for _, v := range samples {
+
+		req, err := http.NewRequest("POST", "/students/", bytes.NewBufferString(v.createJSON))
+		if err != nil {
+			t.Errorf("this is the error: %v\n", err)
+		}
+
+		req = mux.SetURLVars(req, map[string]string{"student_id": v.studentID})
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.CreateOrder)
+		req.Header.Set("Authorization", v.tokenGiven)
+		handler.ServeHTTP(rr, req)
+
+		responseMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(rr.Body.String()), &responseMap)
+		if err != nil {
+			log.Fatalf("Cannot convert to json: %v", err)
+		}
+
+		assert.Equal(t, rr.Code, v.statusCode)
+		if v.statusCode == 201 {
+			orderedBy := responseMap["ordered_by"].(map[string]interface{})
+			assert.Equal(t, orderedBy["first_name"], v.orderedByName)
+		}
+
+		if v.statusCode == 401 || v.statusCode == 422 || v.statusCode == 500 && v.errorMessage != "" {
+			assert.Equal(t, responseMap["error"], v.errorMessage)
+		}
+	}
 }
 
 func TestGetOrders(t *testing.T) {

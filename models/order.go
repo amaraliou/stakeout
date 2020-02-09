@@ -33,7 +33,7 @@ type Order struct {
 	Base
 	UserID      uuid.UUID `json:"-" gorm:"user_id"`
 	OrderedBy   Student   `json:"ordered_by" gorm:"foreignkey:UserID"`
-	ShopID      uuid.UUID `json:"-" gorm:"shop_id"`
+	ShopID      uuid.UUID `json:"shop_id" gorm:"shop_id"`
 	OrderedFrom Shop      `json:"ordered_from" gorm:"foreignkey:ShopID"`
 	OrderItems  []Product `json:"ordered_items" gorm:"many2many:order_products;"`
 	OrderTotal  float32   `json:"total_price"`
