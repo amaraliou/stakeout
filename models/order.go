@@ -52,6 +52,10 @@ func (order *Order) Validate(action string) error {
 			return errors.New("Required shop")
 		}
 
+		if len(order.OrderItems) <= 0 {
+			return errors.New("Required order items")
+		}
+
 	case "updatestatus":
 		if order.Status < 0 {
 			return errors.New("Invalid status")

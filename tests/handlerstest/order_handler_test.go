@@ -151,6 +151,11 @@ func TestCreateOrder(t *testing.T) {
 	unauthTokenString := fmt.Sprintf("Bearer %v", unauthToken)
 	fmt.Print(unauthTokenString)
 
+	orderProduct, err := json.Marshal(products[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	samples := []struct {
 		studentID     string
 		createJSON    string
@@ -162,12 +167,11 @@ func TestCreateOrder(t *testing.T) {
 	}{
 		{
 			studentID:     AuthID,
-			createJSON:    fmt.Sprintf(`{"shop_id": "%s"}`, products[0].ShopID.String()),
+			createJSON:    fmt.Sprintf(`{"shop_id": "%s", "ordered_items": [%s]}`, products[0].ShopID.String(), string(orderProduct)),
 			statusCode:    201,
 			tokenGiven:    tokenString,
 			orderedByName: "Donald",
 		},
-		// Test shows that an order with an empty list of products will pass through, this shouldn't happen.
 	}
 
 	for _, v := range samples {
