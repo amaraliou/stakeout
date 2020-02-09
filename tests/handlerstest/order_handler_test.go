@@ -172,6 +172,41 @@ func TestCreateOrder(t *testing.T) {
 			tokenGiven:    tokenString,
 			orderedByName: "Donald",
 		},
+		{
+			studentID:    AuthID,
+			createJSON:   fmt.Sprintf(`"shop_id": "%s", "ordered_items": [%s]}`, products[0].ShopID.String(), string(orderProduct)),
+			statusCode:   422,
+			tokenGiven:   tokenString,
+			errorMessage: "invalid character ':' after top-level value",
+		},
+		{
+			studentID:    AuthID,
+			createJSON:   fmt.Sprintf(`{"shop_id": "%s", "ordered_items": [%s]}`, products[0].ShopID.String(), string(orderProduct)),
+			statusCode:   401,
+			tokenGiven:   unauthTokenString,
+			errorMessage: "Unauthorized",
+		},
+		{
+			studentID:    unauthStudent.ID.String(),
+			createJSON:   fmt.Sprintf(`{"shop_id": "%s", "ordered_items": [%s]}`, products[0].ShopID.String(), string(orderProduct)),
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized",
+		},
+		{
+			studentID:    "33597717-e0cc-4d9e-bcab-65d48ecb2523",
+			createJSON:   fmt.Sprintf(`{"shop_id": "%s", "ordered_items": [%s]}`, products[0].ShopID.String(), string(orderProduct)),
+			statusCode:   401,
+			tokenGiven:   tokenString,
+			errorMessage: "Unauthorized",
+		},
+		{
+			studentID:    AuthID,
+			createJSON:   fmt.Sprintf(`{"ordered_items": [%s]}`, string(orderProduct)),
+			statusCode:   422,
+			tokenGiven:   tokenString,
+			errorMessage: "Required shop",
+		},
 	}
 
 	for _, v := range samples {
